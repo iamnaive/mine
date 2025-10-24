@@ -207,6 +207,9 @@ export default async function handler(req, res) {
       }
 
       console.log('Returning success response');
+      console.log('playerResult.rows[0]:', JSON.stringify(playerResult.rows[0], null, 2));
+      console.log('claimResult.rows[0]:', JSON.stringify(claimResult.rows[0], null, 2));
+      
       return res.json({
         success: true,
         status: 'claimed',
