@@ -255,26 +255,18 @@ export default class GameEngine {
     if (this.keys['KeyA'] || this.keys['ArrowLeft']) this.player.vx = -2;
     if (this.keys['KeyD'] || this.keys['ArrowRight']) this.player.vx = 2;
     
-    // Jumping (single press only) - increased jump power
+    // Jumping (single press only) - fixed height jump
     if ((this.keys['Space'] || this.keys['KeyW'] || this.keys['ArrowUp']) && this.player.onGround && !this.player.jumping) {
-      // Check if there's space to jump (check all blocks above player)
-      const playerGridX = Math.floor(this.player.x / this.blockSize);
-      const playerGridY = Math.floor(this.player.y / this.blockSize);
+      // Fixed jump height: 2.2 blocks (88 pixels with 40px blocks)
+      // Calculate velocity needed to reach 2.2 blocks height
+      // Using physics: v = sqrt(2 * g * h) where h = 2.2 * blockSize
+      const jumpHeight = 2.2 * this.blockSize; // 88 pixels
+      const gravity = 0.25;
+      const jumpVelocity = Math.sqrt(2 * gravity * jumpHeight);
       
-      let canJump = true;
-      // Check blocks above player (up to jump height)
-      for (let y = playerGridY - 1; y >= Math.max(0, playerGridY - 4); y--) {
-        if (y >= 0 && y < this.gridHeight && !this.blocks[y][playerGridX].mined) {
-          canJump = false;
-          break;
-        }
-      }
-      
-      if (canJump) {
-        this.player.vy = -18; // Increased from -10 to -18 (1.8x stronger)
-        this.player.onGround = false;
-        this.player.jumping = true;
-      }
+      this.player.vy = -jumpVelocity; // Approximately -6.6 for 2.2 block jump
+      this.player.onGround = false;
+      this.player.jumping = true;
     }
     
     // Reset jump flag when key is released
