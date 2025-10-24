@@ -1,9 +1,28 @@
 export const config = { runtime: "nodejs" };
 
+import { lenientRateLimit } from './utils/rateLimit.js';
+
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // Apply rate limiting first
+  const rateLimitResult = lenientRateLimit(req, res);
+  if (rateLimitResult) {
+    return rateLimitResult; // Rate limit exceeded, response already sent
+  }
+
+  // Restrict CORS to specific domains
+  const allowedOrigins = [
+    'https://your-app.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5173'
+  ];
+
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Vary', 'Origin');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();

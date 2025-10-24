@@ -1,13 +1,33 @@
-import { createClient } from '@vercel/postgres';
+export const config = { runtime: "nodejs" };
 
-const client = createClient({
+import { createPool } from '@vercel/postgres';
+import { lenientRateLimit } from './utils/rateLimit.js';
+
+const pool = createPool({
   connectionString: process.env.POSTGRES_URL,
 });
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // Apply rate limiting first
+  const rateLimitResult = lenientRateLimit(req, res);
+  if (rateLimitResult) {
+    return rateLimitResult; // Rate limit exceeded, response already sent
+  }
+
+  // Restrict CORS to specific domains
+  const allowedOrigins = [
+    'https://your-app.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5173'
+  ];
+
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Vary', 'Origin');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -27,7 +47,7 @@ export default async function handler(req, res) {
 }
 
 async function getGameStats() {
-  const playerStats = await client.query(`
+  const playerStats = await pool.query(`
     SELECT 
       COUNT(*) as total_players,
       SUM(tickets) as total_tickets,
@@ -40,14 +60,14 @@ async function getGameStats() {
     FROM players
   `);
 
-  const topPlayers = await client.query(`
+  const topPlayers = await pool.query(`
     SELECT address, score, tickets, best_score
     FROM players 
     ORDER BY score DESC 
     LIMIT 5
   `);
 
-  const dailyActivity = await client.query(`
+  const dailyActivity = await pool.query(`
     SELECT 
       DATE(updated_at) as date,
       COUNT(*) as players,

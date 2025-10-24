@@ -2,12 +2,19 @@ export const config = { runtime: "nodejs" };
 
 import { createPool } from '@vercel/postgres';
 import { recoverMessageAddress } from 'viem';
+import { strictRateLimit } from './utils/rateLimit.js';
 
 const pool = createPool({
   connectionString: process.env.POSTGRES_URL,
 });
 
 export default async function handler(req, res) {
+  // Apply rate limiting first
+  const rateLimitResult = strictRateLimit(req, res);
+  if (rateLimitResult) {
+    return rateLimitResult; // Rate limit exceeded, response already sent
+  }
+
   // Restrict CORS to specific domains
   const allowedOrigins = [
     'https://your-app.vercel.app',
