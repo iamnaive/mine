@@ -1,5 +1,3 @@
-export const config = { runtime: "nodejs20.x" };
-
 import { createClient } from '@vercel/postgres';
 
 const client = createClient({
