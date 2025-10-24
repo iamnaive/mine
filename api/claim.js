@@ -127,15 +127,16 @@ export default async function handler(req, res) {
         });
       }
 
-      // Use transaction for critical operations
-      console.log('Starting database transaction');
-      const client = await pool.connect();
-      try {
-        await client.query('BEGIN');
-        console.log('Transaction started');
+          // Use transaction for critical operations
+          console.log('Starting database transaction');
+          const client = await pool.connect();
+          let playerResult, claimResult; // Declare variables in outer scope
+          try {
+            await client.query('BEGIN');
+            console.log('Transaction started');
 
         // Create new claim
-        const claimResult = await client.query(
+        claimResult = await client.query(
           `INSERT INTO chest_claims (address, ymd, signature, tickets_awarded)
            VALUES ($1, $2, $3, $4)
            RETURNING *`,
@@ -150,7 +151,7 @@ export default async function handler(req, res) {
         }
 
         // Update or create player record
-        let playerResult = await client.query(
+        playerResult = await client.query(
           'SELECT * FROM players WHERE address = $1',
           [normalizedAddress]
         );
