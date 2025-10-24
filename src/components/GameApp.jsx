@@ -37,6 +37,7 @@ export default function GameApp() {
   const [canClaimToday, setCanClaimToday] = useState(true);
   const [currentYmd, setCurrentYmd] = useState(null);
   const [showInstructions, setShowInstructions] = useState(false);
+  const [timeUntilReset, setTimeUntilReset] = useState(null);
 
   // Load current date from server
   useEffect(() => {
@@ -82,6 +83,26 @@ export default function GameApp() {
     
     checkClaimStatusAndLoadStats();
   }, [address, currentYmd]);
+
+  // Update time until reset every minute
+  useEffect(() => {
+    const updateTimeUntilReset = () => {
+      const now = new Date();
+      const utcMidnight = new Date(now);
+      utcMidnight.setUTCHours(24, 0, 0, 0); // Next UTC midnight
+      
+      const timeUntil = utcMidnight.getTime() - now.getTime();
+      const hours = Math.floor(timeUntil / (1000 * 60 * 60));
+      const minutes = Math.floor((timeUntil % (1000 * 60 * 60)) / (1000 * 60));
+      
+      setTimeUntilReset({ hours, minutes });
+    };
+
+    updateTimeUntilReset();
+    const interval = setInterval(updateTimeUntilReset, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!cvsRef.current || gameState !== 'playing') return;
@@ -210,8 +231,17 @@ export default function GameApp() {
       }
     }
     
+    // Check if user already played today
     if (!canClaimToday) {
-      alert('You have already claimed your daily chest today! Come back tomorrow!');
+      const now = new Date();
+      const utcMidnight = new Date(now);
+      utcMidnight.setUTCHours(24, 0, 0, 0); // Next UTC midnight
+      
+      const timeUntilReset = utcMidnight.getTime() - now.getTime();
+      const hoursUntilReset = Math.floor(timeUntilReset / (1000 * 60 * 60));
+      const minutesUntilReset = Math.floor((timeUntilReset % (1000 * 60 * 60)) / (1000 * 60));
+      
+      alert(`You have already played today! Next game available in ${hoursUntilReset}h ${minutesUntilReset}m (at 00:00 UTC).`);
       return;
     }
     
@@ -322,13 +352,22 @@ export default function GameApp() {
             <button 
               className="start-btn" 
               onClick={startGame}
-              disabled={isConnected && chainId !== 10143}
+              disabled={isConnected && (chainId !== 10143 || !canClaimToday)}
             >
               {isConnected ? 
-                (chainId === 10143 ? 'Start Game' : 'Switch to Monad Testnet') : 
+                (chainId === 10143 ? 
+                  (canClaimToday ? 'Start Game' : 'Already Played Today') : 
+                  'Switch to Monad Testnet') : 
                 'Connect Wallet'
               }
             </button>
+            
+            {isConnected && !canClaimToday && timeUntilReset && (
+              <div className="cooldown-info">
+                <p>⏰ Next game available in {timeUntilReset.hours}h {timeUntilReset.minutes}m</p>
+                <p className="cooldown-subtitle">(Resets at 00:00 UTC)</p>
+              </div>
+            )}
             
             <button 
               className="help-btn" 
