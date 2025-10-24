@@ -206,15 +206,30 @@ export default async function handler(req, res) {
         throw new Error('Claim data not found after creation');
       }
 
+      // Check if tickets field exists
+      console.log('Checking tickets field...');
+      console.log('playerResult.rows[0].tickets:', playerResult.rows[0].tickets);
+      console.log('typeof tickets:', typeof playerResult.rows[0].tickets);
+      
+      // Safe access to tickets field
+      const tickets = playerResult.rows[0].tickets || 0;
+      console.log('Final tickets value:', tickets);
+
       console.log('Returning success response');
-      console.log('playerResult.rows[0]:', JSON.stringify(playerResult.rows[0], null, 2));
-      console.log('claimResult.rows[0]:', JSON.stringify(claimResult.rows[0], null, 2));
+      try {
+        console.log('playerResult.rows[0]:', JSON.stringify(playerResult.rows[0], null, 2));
+        console.log('claimResult.rows[0]:', JSON.stringify(claimResult.rows[0], null, 2));
+      } catch (jsonError) {
+        console.error('JSON serialization error:', jsonError);
+        console.log('playerResult.rows[0] (raw):', playerResult.rows[0]);
+        console.log('claimResult.rows[0] (raw):', claimResult.rows[0]);
+      }
       
       return res.json({
         success: true,
         status: 'claimed',
         message: 'Chest claimed successfully',
-        tickets: playerResult.rows[0].tickets,
+        tickets: tickets,
         claim: claimResult.rows[0]
       });
     }
