@@ -124,9 +124,11 @@ export default async function handler(req, res) {
       }
 
       // Use transaction for critical operations
+      console.log('Starting database transaction');
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
+        console.log('Transaction started');
 
         // Create new claim
         const claimResult = await client.query(
@@ -159,7 +161,7 @@ export default async function handler(req, res) {
              RETURNING *`,
             [normalizedAddress, ymd]
           );
-          console.log('New player created:', playerResult.rows[0]);
+          console.log('New player created:', playerResult.rows);
         } else {
           // Update existing player
           playerResult = await client.query(
@@ -180,22 +182,31 @@ export default async function handler(req, res) {
         }
 
         await client.query('COMMIT');
+        console.log('Transaction committed successfully');
       } catch (error) {
+        console.error('Transaction error:', error);
         await client.query('ROLLBACK');
         throw error;
       } finally {
         client.release();
+        console.log('Database client released');
       }
 
       // Ensure we have valid data
+      console.log('Final validation - playerResult:', playerResult.rows);
+      console.log('Final validation - claimResult:', claimResult.rows);
+      
       if (!playerResult.rows[0]) {
+        console.error('Player data not found after update');
         throw new Error('Player data not found after update');
       }
       
       if (!claimResult.rows[0]) {
+        console.error('Claim data not found after creation');
         throw new Error('Claim data not found after creation');
       }
 
+      console.log('Returning success response');
       return res.json({
         success: true,
         status: 'claimed',
