@@ -1,10 +1,11 @@
 export default class GameEngine {
-  constructor(canvas, { onRunEnd, onChestFound, onImagesLoaded }) {
+  constructor(canvas, { onRunEnd, onChestFound, onImagesLoaded, onLoadingProgress }) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.onRunEnd = onRunEnd;
     this.onChestFound = onChestFound;
     this.onImagesLoaded = onImagesLoaded;
+    this.onLoadingProgress = onLoadingProgress;
     
     this.width = canvas.width;
     this.height = canvas.height;
@@ -54,13 +55,25 @@ export default class GameEngine {
     let loadedCount = 0;
     const totalImages = blockTypes.length + 1; // +1 for b5.png
     
+    const updateProgress = () => {
+      const progress = (loadedCount / totalImages) * 100;
+      if (this.onLoadingProgress) {
+        this.onLoadingProgress(progress);
+      }
+    };
+    
     const checkAllLoaded = () => {
       loadedCount++;
+      updateProgress();
+      
       if (loadedCount >= totalImages && this.onImagesLoaded) {
         console.log('All block images loaded!');
         this.onImagesLoaded();
       }
     };
+    
+    // Start with 0% progress
+    updateProgress();
     
     blockTypes.forEach((type, index) => {
       const img = new Image();

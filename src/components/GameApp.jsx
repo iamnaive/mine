@@ -20,6 +20,7 @@ export default function GameApp() {
   const [canClaimToday, setCanClaimToday] = useState(true);
   const [currentYmd, setCurrentYmd] = useState(null);
   const [imagesLoaded, setImagesLoaded] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
 
   // Helper function for signing with wagmi or fallback
   const signWithWagmiOrFallback = useCallback(async (address, message) => {
@@ -125,6 +126,9 @@ export default function GameApp() {
       },
       onImagesLoaded: () => {
         setImagesLoaded(true);
+      },
+      onLoadingProgress: (progress) => {
+        setLoadingProgress(progress);
       },
       onChestFound: async (tickets = 0) => {
         // First, try to claim the chest through the API
@@ -456,7 +460,16 @@ Issued At: ${issuedAt}`;
               <h2>⛏️ Loading Mine...</h2>
               <div className="loading-spinner"></div>
               <p>Preparing blocks and textures...</p>
-              <p className="loading-subtitle">This may take a few seconds</p>
+              <div className="progress-container">
+                <div className="progress-bar">
+                  <div 
+                    className="progress-fill" 
+                    style={{ width: `${loadingProgress}%` }}
+                  ></div>
+                </div>
+                <p className="progress-text">{Math.round(loadingProgress)}%</p>
+              </div>
+              <p className="loading-subtitle">Loading block textures...</p>
             </div>
           </div>
         );
