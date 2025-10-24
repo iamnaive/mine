@@ -92,6 +92,6 @@ export const config = createConfig({
   chains: [MONAD],
   connectors,
   transports,
-  ssr: true,
+  ssr: false, // RainbowKit requires ssr: false
   multiInjectedProviderDiscovery: true,
 });
