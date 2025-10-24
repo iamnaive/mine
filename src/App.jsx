@@ -1,7 +1,7 @@
 import React from "react";
 import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useAccount, useChainId, useSwitchChain, useConnect, useDisconnect } from "wagmi";
+import { useAccount, useChainId, useSwitchChain, useConnect, useDisconnect, useConnections } from "wagmi";
 import { config } from "./wagmi";
 import GameApp from "./components/GameApp";
 
@@ -13,12 +13,13 @@ function AppContent() {
   const { switchChain } = useSwitchChain();
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
+  const { data: connections } = useConnections();
 
   const wrongNet = isConnected && chainId !== 10143;
 
-  const handleConnect = () => {
-    if (connectors.length > 0) {
-      connect({ connector: connectors[0] });
+  const handleConnect = (connector) => {
+    if (connector) {
+      connect({ connector });
     }
   };
 
@@ -32,7 +33,24 @@ function AppContent() {
             <button onClick={() => disconnect()}>Disconnect</button>
           </div>
         ) : (
-          <button onClick={handleConnect}>Connect Wallet</button>
+          <div className="wallet-connectors">
+            {connectors
+              .filter(connector => connector.name !== 'Injected') // Filter out generic injected
+              .map((connector) => {
+                const isReady = connections?.some(conn => conn.connector.uid === connector.uid);
+                return (
+                  <button
+                    key={connector.uid}
+                    onClick={() => handleConnect(connector)}
+                    className="connector-btn"
+                    title={connector.name}
+                    disabled={!isReady}
+                  >
+                    {connector.name}
+                  </button>
+                );
+              })}
+          </div>
         )}
       </div>
 
