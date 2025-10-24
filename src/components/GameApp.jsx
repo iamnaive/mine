@@ -16,6 +16,7 @@ export default function GameApp() {
   });
   const [lastPlayDate, setLastPlayDate] = useState(null);
   const [cooldownTime, setCooldownTime] = useState(0);
+  const [gameEngine, setGameEngine] = useState(null);
 
   // Load last play date from localStorage on mount
   useEffect(() => {
@@ -65,18 +66,26 @@ export default function GameApp() {
             body: JSON.stringify({
               address: address || "guest",
               deltaScore: runScore,
-              deltaTickets: runScore > 0 && Math.random() < 0.005 ? 1 : 0
+              deltaTickets: stats.tickets // Send current tickets count
             })
           });
         } catch {
           // ignore for now
         }
       },
-      onChestFound: () => {
+      onChestFound: (tickets = 0) => {
+        setStats((s) => ({
+          ...s,
+          tickets: s.tickets + tickets
+        }));
         setGameState('chest-found');
       }
     });
-    return () => engine.destroy();
+    setGameEngine(engine);
+    return () => {
+      engine.destroy();
+      setGameEngine(null);
+    };
   }, [address, isConnected, gameState]);
 
   const checkCooldown = () => {
@@ -113,6 +122,20 @@ export default function GameApp() {
     setGameState('start');
   };
 
+  const handleMobileChestOpen = () => {
+    if (gameEngine && gameEngine.chest && !gameEngine.chest.opened) {
+      const distance = Math.sqrt(
+        Math.pow(gameEngine.player.x - gameEngine.chest.x, 2) + 
+        Math.pow(gameEngine.player.y - gameEngine.chest.y, 2)
+      );
+      
+      // If player is close to chest (within 2 blocks)
+      if (distance < gameEngine.blockSize * 2) {
+        gameEngine.openChest();
+      }
+    }
+  };
+
   if (gameState === 'start') {
     return (
       <div className="start-screen">
@@ -127,6 +150,7 @@ export default function GameApp() {
             <li>WASD/arrows - movement</li>
             <li>Space - jump</li>
             <li>Click blocks - mining</li>
+            <li>E key - open chest (when nearby)</li>
             <li>Find the chest in 3 minutes!</li>
             <li>One game per day</li>
           </ul>
@@ -143,6 +167,7 @@ export default function GameApp() {
           <h1>🎁 Congratulations!</h1>
           <p>You found and opened the chest!</p>
           <p>Final Score: {stats.score}</p>
+          <p>🎫 Tickets Earned: {stats.tickets}</p>
           <p>Great job, miner!</p>
           <button className="reset-btn" onClick={resetGame}>
             Play Again Tomorrow
@@ -196,6 +221,18 @@ export default function GameApp() {
           height={window.innerHeight - 100}
           style={{ width: '100vw', height: 'calc(100vh - 100px)' }}
         />
+        
+        {/* Mobile Controls */}
+        <div className="mobile-controls">
+          <button 
+            className="mobile-btn open-chest"
+            onClick={handleMobileChestOpen}
+            disabled={!gameEngine?.chest || gameEngine?.chest?.opened}
+            title="Open Chest (E)"
+          >
+            🎁
+          </button>
+        </div>
       </div>
     </>
   );

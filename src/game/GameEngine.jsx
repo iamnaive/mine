@@ -114,22 +114,6 @@ export default class GameEngine {
     
     this.canvas.addEventListener('mousedown', (e) => {
       this.mouse.down = true;
-      
-      // Check if clicking on chest first
-      if (this.chest && !this.chest.opened) {
-        const chestLeft = this.chest.x - this.chest.size / 2;
-        const chestRight = this.chest.x + this.chest.size / 2;
-        const chestTop = this.chest.y - this.chest.size / 2;
-        const chestBottom = this.chest.y + this.chest.size / 2;
-        
-        if (this.mouse.x >= chestLeft && this.mouse.x <= chestRight &&
-            this.mouse.y >= chestTop && this.mouse.y <= chestBottom) {
-          this.openChest();
-          e.preventDefault();
-          return;
-        }
-      }
-      
       this.handleMining();
       e.preventDefault(); // Prevent text selection
     });
@@ -217,6 +201,9 @@ export default class GameEngine {
       this.chest.opened = true;
       this.chestFound = true;
       
+      // Award 1 ticket for opening chest
+      this.score += 1000; // Bonus points for finding chest
+      
       // Create celebration particles
       for (let i = 0; i < 20; i++) {
         this.particles.push({
@@ -230,7 +217,7 @@ export default class GameEngine {
       }
       
       if (this.onChestFound) {
-        this.onChestFound();
+        this.onChestFound(1); // Pass 1 ticket
       }
     }
   }
@@ -280,8 +267,21 @@ export default class GameEngine {
       this.player.jumping = false;
     }
     
-    // Gravity (reduced for smoother jump)
-    this.player.vy += 0.5;
+    // Check for chest opening with E key
+    if (this.keys['KeyE'] && this.chest && !this.chest.opened) {
+      const distance = Math.sqrt(
+        Math.pow(this.player.x - this.chest.x, 2) + 
+        Math.pow(this.player.y - this.chest.y, 2)
+      );
+      
+      // If player is close to chest (within 2 blocks)
+      if (distance < this.blockSize * 2) {
+        this.openChest();
+      }
+    }
+    
+    // Gravity (even slower for smoother jump)
+    this.player.vy += 0.25;
     
     // Save old position for collisions
     const oldX = this.player.x;

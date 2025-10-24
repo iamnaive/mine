@@ -372,3 +372,56 @@ canvas {
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
 }
+
+/* Mobile Controls */
+.mobile-controls {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  gap: 10px;
+  z-index: 1000;
+}
+
+.mobile-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+  color: white;
+  border: none;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-btn.open-chest {
+  background: linear-gradient(45deg, #fbbf24, #f59e0b);
+  font-size: 20px;
+}
+
+.mobile-btn.open-chest:disabled {
+  background: #6b7280;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Hide mobile controls on desktop */
+@media (min-width: 768px) {
+  .mobile-controls {
+    display: none;
+  }
+}
