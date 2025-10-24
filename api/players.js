@@ -97,8 +97,8 @@ async function ensureTableExists() {
       address VARCHAR(42) UNIQUE NOT NULL,
       tickets INTEGER DEFAULT 0,
       total_claims INTEGER DEFAULT 0,
-      first_claim_date DATE,
-      last_claim_date DATE,
+      first_claim_date VARCHAR(10),
+      last_claim_date VARCHAR(10),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
@@ -106,6 +106,15 @@ async function ensureTableExists() {
     CREATE INDEX IF NOT EXISTS idx_players_address ON players(address);
     CREATE INDEX IF NOT EXISTS idx_players_tickets ON players(tickets DESC);
   `;
+
+  // Add missing columns if they don't exist
+  const addMissingColumns = `
+    ALTER TABLE players 
+    ADD COLUMN IF NOT EXISTS total_claims INTEGER DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS first_claim_date VARCHAR(10),
+    ADD COLUMN IF NOT EXISTS last_claim_date VARCHAR(10);
+  `;
   
   await pool.query(createTableQuery);
+  await pool.query(addMissingColumns);
 }

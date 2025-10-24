@@ -167,7 +167,7 @@ export default async function handler(req, res) {
 }
 
 async function ensureTablesExist() {
-  // Create players table
+  // Create players table with proper schema
   const createPlayersTable = `
     CREATE TABLE IF NOT EXISTS players (
       id SERIAL PRIMARY KEY,
@@ -182,6 +182,14 @@ async function ensureTablesExist() {
     
     CREATE INDEX IF NOT EXISTS idx_players_address ON players(address);
     CREATE INDEX IF NOT EXISTS idx_players_tickets ON players(tickets DESC);
+  `;
+
+  // Add missing columns if they don't exist
+  const addMissingColumns = `
+    ALTER TABLE players 
+    ADD COLUMN IF NOT EXISTS total_claims INTEGER DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS first_claim_date VARCHAR(10),
+    ADD COLUMN IF NOT EXISTS last_claim_date VARCHAR(10);
   `;
 
   // Create chest_claims table
@@ -202,5 +210,6 @@ async function ensureTablesExist() {
   `;
   
   await pool.query(createPlayersTable);
+  await pool.query(addMissingColumns);
   await pool.query(createChestClaimsTable);
 }
