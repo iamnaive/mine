@@ -316,38 +316,7 @@ export default function GameApp() {
       if (gameState === 'start') {
         return (
           <div className="start-screen">
-            <h2>🏗️ Crypto Mine Game</h2>
             <p>Connect your wallet and start digging!</p>
-            
-            {isConnected && (
-              <div className="claim-section">
-                <p>Network: {chainId === 10143 ? 'Monad Testnet ✅' : `Chain ${chainId} ❌`}</p>
-                <p>Daily Game Available: {canClaimToday ? '✅ Yes' : '❌ No'}</p>
-                <p>Your Tickets: {stats.tickets}/3</p>
-                <p>Days Played: {stats.totalClaims}/3</p>
-                {stats.tickets >= 3 && (
-                  <div className="lottery-section">
-                    <h3>🎰 Lottery is Open!</h3>
-                    <p>You can now use your tickets to win prizes!</p>
-                    <button className="lottery-btn">Open Lottery</button>
-                  </div>
-                )}
-                {canClaimToday && chainId === 10143 && stats.tickets < 3 && (
-                  <button 
-                    className="claim-btn" 
-                    onClick={claimChest}
-                  >
-                    Play Today's Game
-                  </button>
-                )}
-                {canClaimToday && chainId !== 10143 && (
-                  <p style={{color: 'orange'}}>⚠️ Please switch to Monad Testnet to play</p>
-                )}
-                {!canClaimToday && stats.tickets < 3 && (
-                  <p>You have already played today! Come back tomorrow!</p>
-                )}
-              </div>
-            )}
             
             <button 
               className="start-btn" 

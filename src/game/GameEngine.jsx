@@ -175,8 +175,12 @@ export default class GameEngine {
     const playerGridX = Math.floor(this.player.x / this.blockSize);
     const playerGridY = Math.floor(this.player.y / this.blockSize);
     
-    // Можно копать только соседние блоки
-    return Math.abs(gridX - playerGridX) <= 1 && Math.abs(gridY - playerGridY) <= 1;
+    // Can mine only adjacent blocks (including diagonally adjacent)
+    const distanceX = Math.abs(gridX - playerGridX);
+    const distanceY = Math.abs(gridY - playerGridY);
+    
+    // Allow mining blocks that are 1 block away in any direction
+    return distanceX <= 1 && distanceY <= 1;
   }
   
   getBlockPoints(type) {
