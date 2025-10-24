@@ -1,0 +1,75 @@
+import { createClient } from '@vercel/postgres';
+
+const client = createClient({
+  connectionString: process.env.POSTGRES_URL,
+});
+
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  try {
+    if (req.method === 'GET') {
+      // Проверяем подключение к базе данных
+      const testQuery = await client.query('SELECT NOW() as current_time');
+      
+      // Получаем все записи игроков
+      const playersQuery = await client.query(`
+        SELECT address, score, tickets, total_runs, best_score, created_at, updated_at 
+        FROM players 
+        ORDER BY score DESC 
+        LIMIT 20
+      `);
+      
+      // Получаем статистику
+      const statsQuery = await client.query(`
+        SELECT 
+          COUNT(*) as total_players,
+          SUM(score) as total_score,
+          SUM(tickets) as total_tickets,
+          AVG(score) as avg_score,
+          MAX(score) as max_score
+        FROM players
+      `);
+
+      return res.json({
+        success: true,
+        database_connection: 'OK',
+        current_time: testQuery.rows[0].current_time,
+        players: playersQuery.rows,
+        stats: statsQuery.rows[0]
+      });
+    }
+
+    if (req.method === 'POST') {
+      // Тестовая запись
+      const { test_address = 'test_' + Date.now() } = req.body;
+      
+      const result = await client.query(`
+        INSERT INTO players (address, score, tickets, total_runs, best_score)
+        VALUES ($1, 100, 1, 1, 100)
+        RETURNING *
+      `, [test_address]);
+
+      return res.json({
+        success: true,
+        message: 'Test record created',
+        record: result.rows[0]
+      });
+    }
+
+    return res.status(405).json({ error: 'Method not allowed' });
+  } catch (error) {
+    console.error('Debug API Error:', error);
+    return res.status(500).json({ 
+      error: 'Database error', 
+      details: error.message,
+      connection_string: process.env.POSTGRES_URL ? 'Set' : 'Not set'
+    });
+  }
+}

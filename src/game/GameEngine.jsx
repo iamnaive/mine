@@ -1,8 +1,9 @@
 export default class GameEngine {
-  constructor(canvas, { onRunEnd }) {
+  constructor(canvas, { onRunEnd, onChestFound }) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.onRunEnd = onRunEnd;
+    this.onChestFound = onChestFound;
     
     this.width = canvas.width;
     this.height = canvas.height;
@@ -21,7 +22,8 @@ export default class GameEngine {
       vx: 0,
       vy: 0,
       size: this.playerSize,
-      onGround: false
+      onGround: false,
+      jumping: false
     };
     
     // 2D массив блоков (true = есть блок, false = пусто)
@@ -141,6 +143,9 @@ export default class GameEngine {
         if (Math.random() < chestChance) {
           this.chestFound = true;
           this.showChestFound();
+          if (this.onChestFound) {
+            this.onChestFound();
+          }
         }
       }
       
@@ -208,15 +213,21 @@ export default class GameEngine {
   
   
   update() {
-    // Player movement
+    // Player movement (уменьшенная скорость)
     this.player.vx = 0;
-    if (this.keys['KeyA'] || this.keys['ArrowLeft']) this.player.vx = -4;
-    if (this.keys['KeyD'] || this.keys['ArrowRight']) this.player.vx = 4;
+    if (this.keys['KeyA'] || this.keys['ArrowLeft']) this.player.vx = -2;
+    if (this.keys['KeyD'] || this.keys['ArrowRight']) this.player.vx = 2;
     
-    // Jumping
-    if ((this.keys['Space'] || this.keys['KeyW'] || this.keys['ArrowUp']) && this.player.onGround) {
-      this.player.vy = -12;
+    // Jumping (только одно нажатие)
+    if ((this.keys['Space'] || this.keys['KeyW'] || this.keys['ArrowUp']) && this.player.onGround && !this.player.jumping) {
+      this.player.vy = -10;
       this.player.onGround = false;
+      this.player.jumping = true;
+    }
+    
+    // Сбрасываем флаг прыжка когда отпускаем клавишу
+    if (!this.keys['Space'] && !this.keys['KeyW'] && !this.keys['ArrowUp']) {
+      this.player.jumping = false;
     }
     
     // Gravity
@@ -289,20 +300,20 @@ export default class GameEngine {
               
               const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
               
-              if (minOverlap === overlapTop && this.player.vy > 0) {
+              if (minOverlap === overlapTop && this.player.vy >= 0) {
                 // Коллизия сверху (игрок падает на блок)
                 this.player.y = blockTop - this.playerSize/2;
                 this.player.vy = 0;
                 onGround = true;
-              } else if (minOverlap === overlapBottom && this.player.vy < 0) {
+              } else if (minOverlap === overlapBottom && this.player.vy <= 0) {
                 // Коллизия снизу (игрок ударяется о блок сверху)
                 this.player.y = blockBottom + this.playerSize/2;
                 this.player.vy = 0;
-              } else if (minOverlap === overlapLeft && this.player.vx > 0) {
+              } else if (minOverlap === overlapLeft && this.player.vx >= 0) {
                 // Коллизия слева
                 this.player.x = blockLeft - this.playerSize/2;
                 this.player.vx = 0;
-              } else if (minOverlap === overlapRight && this.player.vx < 0) {
+              } else if (minOverlap === overlapRight && this.player.vx <= 0) {
                 // Коллизия справа
                 this.player.x = blockRight + this.playerSize/2;
                 this.player.vx = 0;

@@ -6,6 +6,7 @@ export default function GameApp() {
   const cvsRef = useRef(null);
   const { address, isConnected } = useAccount();
 
+  const [gameState, setGameState] = useState('start'); // 'start', 'playing', 'chest-found'
   const [stats, setStats] = useState({
     runs: 0,
     best: 0,
@@ -14,7 +15,7 @@ export default function GameApp() {
   });
 
   useEffect(() => {
-    if (!cvsRef.current) return;
+    if (!cvsRef.current || gameState !== 'playing') return;
     const engine = new GameEngine(cvsRef.current, {
       onRunEnd: async (runScore) => {
         setStats((s) => ({
@@ -36,10 +37,61 @@ export default function GameApp() {
         } catch {
           // ignore for now
         }
+      },
+      onChestFound: () => {
+        setGameState('chest-found');
       }
     });
     return () => engine.destroy();
-  }, [address, isConnected]);
+  }, [address, isConnected, gameState]);
+
+  const startGame = () => {
+    if (!isConnected) {
+      alert('Пожалуйста, подключите кошелек для начала игры');
+      return;
+    }
+    setGameState('playing');
+  };
+
+  const resetGame = () => {
+    setGameState('start');
+  };
+
+  if (gameState === 'start') {
+    return (
+      <div className="start-screen">
+        <h2>🏗️ Crypto Mine Game</h2>
+        <p>Подключите кошелек и начните копать!</p>
+        <button className="start-btn" onClick={startGame}>
+          {isConnected ? 'Начать игру' : 'Подключить кошелек'}
+        </button>
+        <div className="game-info">
+          <h3>Как играть:</h3>
+          <ul>
+            <li>WASD/стрелки - движение</li>
+            <li>Пробел - прыжок</li>
+            <li>Клик по блокам - копание</li>
+            <li>Найдите сундук за 3 минуты!</li>
+          </ul>
+        </div>
+      </div>
+    );
+  }
+
+  if (gameState === 'chest-found') {
+    return (
+      <div className="chest-found-screen">
+        <div className="chest-message">
+          <h1>🎁 Поздравляем!</h1>
+          <p>Вы нашли сундук!</p>
+          <p>Счет: {stats.score}</p>
+          <button className="reset-btn" onClick={resetGame}>
+            Играть снова
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
