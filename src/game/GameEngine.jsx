@@ -8,11 +8,11 @@ export default class GameEngine {
     this.width = canvas.width;
     this.height = canvas.height;
     
-    // Размер блока (2-2.5x больше игрока)
+    // Block size (2-2.5x larger than player)
     this.blockSize = 40;
     this.playerSize = 16;
     
-    // Сетка блоков
+    // Block grid
     this.gridWidth = Math.ceil(this.width / this.blockSize);
     this.gridHeight = Math.ceil(this.height / this.blockSize);
     
@@ -26,7 +26,7 @@ export default class GameEngine {
       jumping: false
     };
     
-    // 2D массив блоков (true = есть блок, false = пусто)
+    // 2D array of blocks (true = block exists, false = empty)
     this.blocks = [];
     this.particles = [];
     this.score = 0;
@@ -42,12 +42,12 @@ export default class GameEngine {
   }
   
   generateWorld() {
-    // Заполняем всю сетку блоками
+    // Fill the entire grid with blocks
     this.blocks = [];
     for (let y = 0; y < this.gridHeight; y++) {
       this.blocks[y] = [];
       for (let x = 0; x < this.gridWidth; x++) {
-        // Все блоки заполнены (плотная структура)
+        // All blocks are filled (dense structure)
         this.blocks[y][x] = {
           type: this.getBlockType(x, y),
           mined: false
@@ -55,12 +55,12 @@ export default class GameEngine {
       }
     }
     
-    // Спавним игрока в случайном месте
+    // Spawn player in the middle
     this.spawnPlayer();
   }
   
   getBlockType(x, y) {
-    // Разные типы блоков в зависимости от глубины
+    // Different block types depending on depth
     const depth = y / this.gridHeight;
     
     if (depth < 0.2) {
@@ -73,18 +73,18 @@ export default class GameEngine {
   }
   
   spawnPlayer() {
-    // Спавним игрока в середине шахты
+    // Spawn player in the middle of the mine
     this.player.gridX = Math.floor(this.gridWidth / 2);
     this.player.gridY = Math.floor(this.gridHeight / 2);
     
-    // Выкапываем блок под игроком для спавна
+    // Dig out the block under the player for spawn
     this.blocks[this.player.gridY][this.player.gridX].mined = true;
     
-    // Конвертируем в пиксели
+    // Convert to pixels
     this.player.x = this.player.gridX * this.blockSize + this.blockSize / 2;
     this.player.y = this.player.gridY * this.blockSize + this.blockSize / 2;
     
-    // Сбрасываем скорость
+    // Reset velocity
     this.player.vx = 0;
     this.player.vy = 0;
     this.player.onGround = false;
@@ -129,15 +129,15 @@ export default class GameEngine {
     
     const block = this.blocks[gridY][gridX];
     
-    // Проверяем, что блок не выкопан и рядом с игроком
+    // Check that block is not mined and near player
     if (!block.mined && this.isNearPlayer(gridX, gridY)) {
       block.mined = true;
       
-      // Добавляем очки в зависимости от типа блока
+      // Add points depending on block type
       const points = this.getBlockPoints(block.type);
       this.score += points;
       
-      // Проверяем на сундук (только с 2 по 3 минуту)
+      // Check for chest (only from 2nd to 3rd minute)
       if (this.timeLeft <= 120 && this.timeLeft > 0 && !this.chestFound) {
         const chestChance = this.getChestChance();
         if (Math.random() < chestChance) {
@@ -149,7 +149,7 @@ export default class GameEngine {
         }
       }
       
-      // Создаем частицы
+      // Create particles
       this.createParticles(gridX, gridY, block.type);
     }
   }
@@ -213,19 +213,19 @@ export default class GameEngine {
   
   
   update() {
-    // Player movement (уменьшенная скорость)
+    // Player movement (reduced speed)
     this.player.vx = 0;
     if (this.keys['KeyA'] || this.keys['ArrowLeft']) this.player.vx = -2;
     if (this.keys['KeyD'] || this.keys['ArrowRight']) this.player.vx = 2;
     
-    // Jumping (только одно нажатие)
+    // Jumping (single press only)
     if ((this.keys['Space'] || this.keys['KeyW'] || this.keys['ArrowUp']) && this.player.onGround && !this.player.jumping) {
       this.player.vy = -10;
       this.player.onGround = false;
       this.player.jumping = true;
     }
     
-    // Сбрасываем флаг прыжка когда отпускаем клавишу
+    // Reset jump flag when key is released
     if (!this.keys['Space'] && !this.keys['KeyW'] && !this.keys['ArrowUp']) {
       this.player.jumping = false;
     }
@@ -233,7 +233,7 @@ export default class GameEngine {
     // Gravity
     this.player.vy += 0.8;
     
-    // Сохраняем старую позицию для коллизий
+    // Save old position for collisions
     const oldX = this.player.x;
     const oldY = this.player.y;
     
@@ -241,7 +241,7 @@ export default class GameEngine {
     this.player.x += this.player.vx;
     this.player.y += this.player.vy;
     
-    // Проверяем коллизии с блоками
+    // Check collisions with blocks
     this.checkBlockCollisions(oldX, oldY);
     
     // Boundaries
@@ -263,7 +263,7 @@ export default class GameEngine {
       this.timeLeft = 180;
       this.score = 0;
       this.chestFound = false;
-      this.generateWorld(); // Регенерируем мир
+      this.generateWorld(); // Regenerate world
       this.particles = [];
     }
   }
@@ -274,10 +274,10 @@ export default class GameEngine {
     const playerTop = this.player.y - this.playerSize/2;
     const playerBottom = this.player.y + this.playerSize/2;
     
-    // Проверяем коллизии с блоками
+    // Check collisions with blocks
     let onGround = false;
     
-    // Проверяем блоки вокруг игрока
+    // Check blocks around player
     for (let y = Math.floor(playerTop / this.blockSize); y <= Math.floor(playerBottom / this.blockSize); y++) {
       for (let x = Math.floor(playerLeft / this.blockSize); x <= Math.floor(playerRight / this.blockSize); x++) {
         if (x >= 0 && x < this.gridWidth && y >= 0 && y < this.gridHeight) {
@@ -288,11 +288,11 @@ export default class GameEngine {
             const blockTop = y * this.blockSize;
             const blockBottom = (y + 1) * this.blockSize;
             
-            // Проверяем пересечение
+            // Check intersection
             if (playerRight > blockLeft && playerLeft < blockRight && 
                 playerBottom > blockTop && playerTop < blockBottom) {
               
-              // Определяем направление коллизии
+              // Determine collision direction
               const overlapLeft = playerRight - blockLeft;
               const overlapRight = blockRight - playerLeft;
               const overlapTop = playerBottom - blockTop;
@@ -301,20 +301,20 @@ export default class GameEngine {
               const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
               
               if (minOverlap === overlapTop && this.player.vy >= 0) {
-                // Коллизия сверху (игрок падает на блок)
+                // Collision from above (player falls on block)
                 this.player.y = blockTop - this.playerSize/2;
                 this.player.vy = 0;
                 onGround = true;
               } else if (minOverlap === overlapBottom && this.player.vy <= 0) {
-                // Коллизия снизу (игрок ударяется о блок сверху)
+                // Collision from below (player hits block from above)
                 this.player.y = blockBottom + this.playerSize/2;
                 this.player.vy = 0;
               } else if (minOverlap === overlapLeft && this.player.vx >= 0) {
-                // Коллизия слева
+                // Collision from left
                 this.player.x = blockLeft - this.playerSize/2;
                 this.player.vx = 0;
               } else if (minOverlap === overlapRight && this.player.vx <= 0) {
-                // Коллизия справа
+                // Collision from right
                 this.player.x = blockRight + this.playerSize/2;
                 this.player.vx = 0;
               }

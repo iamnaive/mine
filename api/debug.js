@@ -15,10 +15,10 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      // Проверяем подключение к базе данных
+      // Check database connection
       const testQuery = await client.query('SELECT NOW() as current_time');
       
-      // Получаем все записи игроков
+      // Get all player records
       const playersQuery = await client.query(`
         SELECT address, score, tickets, total_runs, best_score, created_at, updated_at 
         FROM players 
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
         LIMIT 20
       `);
       
-      // Получаем статистику
+      // Get statistics
       const statsQuery = await client.query(`
         SELECT 
           COUNT(*) as total_players,
@@ -47,7 +47,7 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      // Тестовая запись
+      // Test record
       const { test_address = 'test_' + Date.now() } = req.body;
       
       const result = await client.query(`

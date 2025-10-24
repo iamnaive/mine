@@ -47,7 +47,7 @@ export default function GameApp() {
 
   const startGame = () => {
     if (!isConnected) {
-      alert('Пожалуйста, подключите кошелек для начала игры');
+      alert('Please connect your wallet to start the game');
       return;
     }
     setGameState('playing');
@@ -61,17 +61,17 @@ export default function GameApp() {
     return (
       <div className="start-screen">
         <h2>🏗️ Crypto Mine Game</h2>
-        <p>Подключите кошелек и начните копать!</p>
+        <p>Connect your wallet and start digging!</p>
         <button className="start-btn" onClick={startGame}>
-          {isConnected ? 'Начать игру' : 'Подключить кошелек'}
+          {isConnected ? 'Start Game' : 'Connect Wallet'}
         </button>
         <div className="game-info">
-          <h3>Как играть:</h3>
+          <h3>How to play:</h3>
           <ul>
-            <li>WASD/стрелки - движение</li>
-            <li>Пробел - прыжок</li>
-            <li>Клик по блокам - копание</li>
-            <li>Найдите сундук за 3 минуты!</li>
+            <li>WASD/arrows - movement</li>
+            <li>Space - jump</li>
+            <li>Click blocks - mining</li>
+            <li>Find the chest in 3 minutes!</li>
           </ul>
         </div>
       </div>
@@ -82,11 +82,11 @@ export default function GameApp() {
     return (
       <div className="chest-found-screen">
         <div className="chest-message">
-          <h1>🎁 Поздравляем!</h1>
-          <p>Вы нашли сундук!</p>
-          <p>Счет: {stats.score}</p>
+          <h1>🎁 Congratulations!</h1>
+          <p>You found the chest!</p>
+          <p>Score: {stats.score}</p>
           <button className="reset-btn" onClick={resetGame}>
-            Играть снова
+            Play Again
           </button>
         </div>
       </div>
