@@ -8,18 +8,21 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          // Группируем RainbowKit в один chunk
-          rainbowkit: ['@rainbow-me/rainbowkit'],
-          // Группируем Wagmi в один chunk
-          wagmi: ['wagmi', 'viem'],
-          // Группируем React в один chunk
+          // Группируем React в один chunk (должен загружаться первым)
           react: ['react', 'react-dom'],
           // Группируем React Query в один chunk
-          query: ['@tanstack/react-query']
+          query: ['@tanstack/react-query'],
+          // Группируем Wagmi в один chunk
+          wagmi: ['wagmi', 'viem'],
+          // Группируем RainbowKit в один chunk
+          rainbowkit: ['@rainbow-me/rainbowkit']
         }
       }
     },
     // Увеличиваем лимит размера chunk
     chunkSizeWarningLimit: 1000
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', '@tanstack/react-query', 'wagmi', 'viem', '@rainbow-me/rainbowkit']
   }
 });
