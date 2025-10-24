@@ -8,9 +8,20 @@ const pool = createPool({
 });
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // Restrict CORS to specific domains
+  const allowedOrigins = [
+    'https://your-app.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5173'
+  ];
+  
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Vary', 'Origin');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -39,14 +50,42 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      const { address, ymd, signature } = req.body;
+      const { address, ymd, signature, nonce } = req.body;
       
-      if (!address || !ymd || !signature) {
-        return res.status(400).json({ error: 'Address, ymd, and signature are required' });
+      if (!address || !ymd || !signature || !nonce) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Address, ymd, signature, and nonce are required' 
+        });
       }
 
-      // Verify signature
-      const message = `WE_CHEST:${address}:${ymd}`;
+      // Verify nonce first
+      const nonceResult = await pool.query(
+        'SELECT * FROM auth_nonces WHERE address = $1 AND nonce = $2 AND expires_at > NOW()',
+        [address.toLowerCase(), nonce]
+      );
+
+      if (nonceResult.rows.length === 0) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Invalid or expired nonce' 
+        });
+      }
+
+      // Verify signature with enhanced message format
+      const domain = process.env.NEXT_PUBLIC_DOMAIN || 'localhost:3000';
+      const chainId = 10143;
+      const issuedAt = nonceResult.rows[0].issued_at;
+      const message = `${domain} wants you to sign in with your Ethereum account:
+${address}
+
+Claim daily chest for ${ymd}
+
+URI: https://${domain}
+Version: 1
+Chain ID: ${chainId}
+Nonce: ${nonce}
+Issued At: ${issuedAt}`;
       console.log('Claim attempt:', { 
         address, 
         ymd, 
@@ -78,8 +117,17 @@ export default async function handler(req, res) {
 
       if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
         console.error('Signature does not match address:', { recoveredAddress, address });
-        return res.status(400).json({ error: 'Signature does not match address' });
+        return res.status(400).json({ 
+          success: false,
+          error: 'Signature does not match address' 
+        });
       }
+
+      // Consume nonce
+      await pool.query(
+        'DELETE FROM auth_nonces WHERE address = $1 AND nonce = $2',
+        [address.toLowerCase(), nonce]
+      );
 
       // Normalize address to lowercase for database operations
       const normalizedAddress = address.toLowerCase();
@@ -101,45 +149,58 @@ export default async function handler(req, res) {
         });
       }
 
-      // Create new claim
-      const claimResult = await pool.query(
-        `INSERT INTO chest_claims (address, ymd, signature, tickets_awarded)
-         VALUES ($1, $2, $3, $4)
-         RETURNING *`,
-        [normalizedAddress, ymd, signature, 1]
-      );
+      // Use transaction for critical operations
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
 
-      console.log('Claim created:', claimResult.rows[0]);
-
-      // Update or create player record
-      let playerResult = await pool.query(
-        'SELECT * FROM players WHERE address = $1',
-        [normalizedAddress]
-      );
-
-      console.log('Player lookup:', playerResult.rows);
-
-      if (playerResult.rows.length === 0) {
-        // Create new player
-        playerResult = await pool.query(
-          `INSERT INTO players (address, tickets, total_claims, first_claim_date)
-           VALUES ($1, 1, 1, $2)
+        // Create new claim
+        const claimResult = await client.query(
+          `INSERT INTO chest_claims (address, ymd, signature, tickets_awarded)
+           VALUES ($1, $2, $3, $4)
            RETURNING *`,
-          [normalizedAddress, ymd]
+          [normalizedAddress, ymd, signature, 1]
         );
-        console.log('New player created:', playerResult.rows[0]);
-      } else {
-        // Update existing player
-        playerResult = await pool.query(
-          `UPDATE players 
-           SET tickets = tickets + 1, 
-               total_claims = total_claims + 1,
-               last_claim_date = $2
-           WHERE address = $1
-           RETURNING *`,
-          [normalizedAddress, ymd]
+
+        console.log('Claim created:', claimResult.rows[0]);
+
+        // Update or create player record
+        let playerResult = await client.query(
+          'SELECT * FROM players WHERE address = $1',
+          [normalizedAddress]
         );
-        console.log('Player updated:', playerResult.rows[0]);
+
+        console.log('Player lookup:', playerResult.rows);
+
+        if (playerResult.rows.length === 0) {
+          // Create new player
+          playerResult = await client.query(
+            `INSERT INTO players (address, tickets, total_claims, first_claim_date)
+             VALUES ($1, 1, 1, $2)
+             RETURNING *`,
+            [normalizedAddress, ymd]
+          );
+          console.log('New player created:', playerResult.rows[0]);
+        } else {
+          // Update existing player
+          playerResult = await client.query(
+            `UPDATE players 
+             SET tickets = tickets + 1, 
+                 total_claims = total_claims + 1,
+                 last_claim_date = $2
+             WHERE address = $1
+             RETURNING *`,
+            [normalizedAddress, ymd]
+          );
+          console.log('Player updated:', playerResult.rows[0]);
+        }
+
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
       }
 
       return res.json({

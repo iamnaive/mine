@@ -7,9 +7,20 @@ const pool = createPool({
 });
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // Restrict CORS to specific domains
+  const allowedOrigins = [
+    'https://your-app.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5173'
+  ];
+  
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Vary', 'Origin');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -21,12 +32,15 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       const { limit = 10, type = 'tickets' } = req.query;
       
-      let orderBy = 'tickets DESC, total_claims DESC';
-      if (type === 'claims') {
-        orderBy = 'total_claims DESC, tickets DESC';
-      } else if (type === 'recent') {
-        orderBy = 'last_claim_date DESC, tickets DESC';
-      }
+      // Whitelist allowed sorting options to prevent SQL injection
+      const allowedSorts = {
+        'tickets': 'tickets DESC, total_claims DESC',
+        'claims': 'total_claims DESC, tickets DESC',
+        'recent': 'last_claim_date DESC, tickets DESC'
+      };
+      
+      const orderBy = allowedSorts[type] || allowedSorts.tickets;
+      const limitNum = Math.min(parseInt(limit) || 10, 100); // Cap at 100
 
       const result = await pool.query(`
         SELECT 
@@ -40,7 +54,7 @@ export default async function handler(req, res) {
         FROM players 
         ORDER BY ${orderBy}
         LIMIT $1
-      `, [parseInt(limit)]);
+      `, [limitNum]);
 
       // Get total stats
       const statsResult = await pool.query(`

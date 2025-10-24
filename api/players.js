@@ -7,9 +7,20 @@ const pool = createPool({
 });
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  // Restrict CORS to specific domains
+  const allowedOrigins = [
+    'https://your-app.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5173'
+  ];
+  
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Vary', 'Origin');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -18,75 +29,47 @@ export default async function handler(req, res) {
   try {
     await ensureTableExists();
 
-        if (req.method === 'POST') {
-          const { address, deltaTickets = 0 } = req.body;
-          
-          if (!address) {
-            return res.status(400).json({ error: 'Address is required' });
-          }
-          
-          // Normalize address to lowercase
-          const normalizedAddress = address.toLowerCase();
+    if (req.method === 'GET') {
+      const { address } = req.query;
+      
+      if (!address) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Address parameter is required' 
+        });
+      }
 
-          // Get or create player
-          let result = await pool.query(
-            'SELECT * FROM players WHERE address = $1',
-            [normalizedAddress]
-          );
+      // Get player data (read-only)
+      const result = await pool.query(
+        'SELECT * FROM players WHERE address = $1',
+        [address.toLowerCase()]
+      );
 
-          if (result.rows.length === 0) {
-            // Create new player
-            result = await pool.query(
-              `INSERT INTO players (address, tickets, total_claims)
-               VALUES ($1, $2, 1)
-               RETURNING *`,
-              [normalizedAddress, deltaTickets]
-            );
-          } else {
-            // Update existing player
-            const player = result.rows[0];
-            const newTickets = player.tickets + deltaTickets;
-            
-            result = await pool.query(
-              `UPDATE players 
-               SET tickets = $2, total_claims = total_claims + 1
-               WHERE address = $1
-               RETURNING *`,
-              [normalizedAddress, newTickets]
-            );
-          }
+      if (result.rows.length === 0) {
+        return res.status(404).json({ 
+          success: false,
+          error: 'Player not found' 
+        });
+      }
 
-          return res.json(result.rows[0]);
-        }
+      return res.json({
+        success: true,
+        player: result.rows[0]
+      });
+    }
 
-        if (req.method === 'GET') {
-          const { address } = req.query;
-          
-          if (address) {
-            const normalizedAddress = address.toLowerCase();
-            const result = await pool.query(
-              'SELECT * FROM players WHERE address = $1',
-              [normalizedAddress]
-            );
-            
-            if (result.rows.length === 0) {
-              return res.status(404).json({ error: 'Player not found' });
-            }
-            
-            return res.json(result.rows[0]);
-          } else {
-            // Get all players (for debugging)
-            const result = await pool.query(
-              'SELECT address, tickets, total_claims, first_claim_date, last_claim_date FROM players ORDER BY tickets DESC LIMIT 50'
-            );
-            return res.json(result.rows);
-          }
-        }
+    // Block all write operations
+    return res.status(405).json({ 
+      success: false,
+      error: 'Method not allowed. Player balance can only be modified through claim/lottery APIs.' 
+    });
 
-    return res.status(405).json({ error: 'Method not allowed' });
   } catch (error) {
-    console.error('API Error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error('Players API Error:', error);
+    return res.status(500).json({ 
+      success: false,
+      error: 'Internal server error'
+    });
   }
 }
 
