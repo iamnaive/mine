@@ -108,8 +108,11 @@ export default class GameEngine {
     // Mouse
     this.canvas.addEventListener('mousemove', (e) => {
       const rect = this.canvas.getBoundingClientRect();
-      this.mouse.x = e.clientX - rect.left;
-      this.mouse.y = e.clientY - rect.top;
+      // Scale mouse coordinates to match canvas internal size
+      const scaleX = this.canvas.width / rect.width;
+      const scaleY = this.canvas.height / rect.height;
+      this.mouse.x = (e.clientX - rect.left) * scaleX;
+      this.mouse.y = (e.clientY - rect.top) * scaleY;
     });
     
     this.canvas.addEventListener('mousedown', (e) => {
@@ -137,8 +140,22 @@ export default class GameEngine {
     const gridX = Math.floor(this.mouse.x / this.blockSize);
     const gridY = Math.floor(this.mouse.y / this.blockSize);
     
+    // Debug logging
+    console.log('Mining attempt:', {
+      mouseX: this.mouse.x,
+      mouseY: this.mouse.y,
+      gridX,
+      gridY,
+      blockSize: this.blockSize,
+      playerX: this.player.x,
+      playerY: this.player.y,
+      playerGridX: Math.floor(this.player.x / this.blockSize),
+      playerGridY: Math.floor(this.player.y / this.blockSize)
+    });
+    
     // Проверяем, что клик в пределах сетки
     if (gridX < 0 || gridX >= this.gridWidth || gridY < 0 || gridY >= this.gridHeight) {
+      console.log('Click outside grid bounds');
       return;
     }
     
@@ -146,6 +163,7 @@ export default class GameEngine {
     
     // Check that block is not mined and near player
     if (!block.mined && this.isNearPlayer(gridX, gridY)) {
+      console.log('Mining block at', gridX, gridY);
       block.mined = true;
       
       // Add points depending on block type
@@ -179,8 +197,17 @@ export default class GameEngine {
     const distanceX = Math.abs(gridX - playerGridX);
     const distanceY = Math.abs(gridY - playerGridY);
     
+    const isNear = distanceX <= 1 && distanceY <= 1;
+    
+    console.log('isNearPlayer check:', {
+      targetGrid: [gridX, gridY],
+      playerGrid: [playerGridX, playerGridY],
+      distance: [distanceX, distanceY],
+      isNear
+    });
+    
     // Allow mining blocks that are 1 block away in any direction
-    return distanceX <= 1 && distanceY <= 1;
+    return isNear;
   }
   
   getBlockPoints(type) {
@@ -464,16 +491,16 @@ export default class GameEngine {
     this.ctx.lineWidth = 2;
     this.ctx.strokeRect(this.player.x - this.player.size/2, this.player.y - this.player.size/2, this.player.size, this.player.size);
     
-    // Draw UI
-    this.ctx.fillStyle = '#e6eefc';
-    this.ctx.font = '16px monospace';
-    this.ctx.fillText(`Score: ${this.score}`, 10, 25);
-    this.ctx.fillText(`Time: ${Math.ceil(this.timeLeft)}s`, 10, 45);
+    // Draw UI - larger and more visible
+    this.ctx.fillStyle = '#ffffff';
+    this.ctx.font = 'bold 24px Inter, sans-serif';
+    this.ctx.fillText(`Score: ${this.score}`, 20, 35);
+    this.ctx.fillText(`Time: ${Math.ceil(this.timeLeft)}s`, 20, 65);
     
     // Показываем шанс сундука (если в периоде 2-3 минуты)
     if (this.timeLeft <= 120 && this.timeLeft > 0) {
       const chestChance = this.getChestChance();
-      this.ctx.fillText(`Chest chance: ${Math.round(chestChance * 100)}%`, 10, 65);
+      this.ctx.fillText(`Chest chance: ${Math.round(chestChance * 100)}%`, 20, 95);
     }
     
     // Показываем найденный сундук

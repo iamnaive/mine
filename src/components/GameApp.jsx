@@ -36,6 +36,7 @@ export default function GameApp() {
   const [gameEngine, setGameEngine] = useState(null);
   const [canClaimToday, setCanClaimToday] = useState(true);
   const [currentYmd, setCurrentYmd] = useState(null);
+  const [showInstructions, setShowInstructions] = useState(false);
 
   // Load current date from server
   useEffect(() => {
@@ -328,19 +329,30 @@ export default function GameApp() {
                 'Connect Wallet'
               }
             </button>
-            <div className="game-info">
-              <h3>How to play:</h3>
-              <ul>
-                <li>WASD/arrows - movement</li>
-                <li>Space - jump</li>
-                <li>Click blocks - mining</li>
-                <li>E key - open chest (when nearby)</li>
-                <li>Find the chest in 3 minutes!</li>
-                <li>One game per day for 3 days</li>
-                <li>Earn 1 ticket per day (max 3 tickets)</li>
-                <li>After 3 days: lottery opens!</li>
-              </ul>
-            </div>
+            
+            <button 
+              className="help-btn" 
+              onClick={() => setShowInstructions(!showInstructions)}
+            >
+              {showInstructions ? 'Hide Instructions' : 'How to Play?'}
+            </button>
+            
+            {showInstructions && (
+              <div className="game-info">
+                <h3>How to play:</h3>
+                <ul>
+                  <li>WASD/arrows - movement</li>
+                  <li>Space - jump</li>
+                  <li>Click blocks - mining</li>
+                  <li>E key - open chest (when nearby)</li>
+                  <li>Find the chest in 3 minutes!</li>
+                  <li>One game per day for 3 days</li>
+                  <li>Earn 1 ticket per day (max 3 tickets)</li>
+                  <li>After 3 days: lottery opens!</li>
+                </ul>
+              </div>
+            )}
+            
             <Leaderboard />
           </div>
         );

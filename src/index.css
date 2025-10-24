@@ -146,6 +146,30 @@ canvas {
   transform: translateY(0);
 }
 
+.help-btn {
+  background: transparent;
+  color: #7d8590;
+  border: 1px solid #30363d;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 10px 0;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+}
+
+.help-btn:hover {
+  background: #21262d;
+  color: #ffffff;
+  border-color: #7d8590;
+}
+
 .game-info {
   background: rgba(255, 255, 255, 0.1);
   padding: 20px;
