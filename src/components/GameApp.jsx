@@ -155,7 +155,7 @@ export default function GameApp() {
             return;
           }
           
-          const { nonce, domain, chainId, issuedAt, expirationTime } = nonceData;
+          const { nonce, domain, chainId: serverChainId, issuedAt, expirationTime } = nonceData;
           
           // Create SIWE-style message
           const message = `${domain} wants you to sign in with your Ethereum account:
@@ -165,7 +165,7 @@ Claim daily chest for ${currentYmd}
 
 URI: https://${domain}
 Version: 1
-Chain ID: ${chainId}
+Chain ID: ${serverChainId}
 Nonce: ${nonce}
 Issued At: ${issuedAt}`;
           

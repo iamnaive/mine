@@ -600,6 +600,7 @@ canvas {
   font-size: 14px !important;
   transition: all 0.2s ease !important;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+  outline: none !important;
 }
 
 [data-rk] button:hover {
