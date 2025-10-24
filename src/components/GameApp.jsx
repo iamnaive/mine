@@ -188,7 +188,15 @@ Chain ID: ${serverChainId}
 Nonce: ${nonce}
 Issued At: ${issuedAt}`;
           
-          console.log('Message to sign:', message);
+          console.log('Client message to sign:', message);
+          console.log('Client message components:', {
+            domain,
+            address,
+            currentYmd,
+            serverChainId,
+            nonce,
+            issuedAt
+          });
           
           // Use wagmi signMessage with fallback
           const signature = await signWithWagmiOrFallback(address, message);

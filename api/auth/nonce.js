@@ -57,10 +57,13 @@ export default async function handler(req, res) {
         [address.toLowerCase(), nonce, issuedAt, expirationTime]
       );
 
+      const domain = process.env.NEXT_PUBLIC_DOMAIN || 'mine-kappa-vert.vercel.app';
+      console.log('Nonce API - domain used:', domain);
+      
       return res.json({
         success: true,
         nonce,
-        domain: process.env.NEXT_PUBLIC_DOMAIN || 'localhost:3000',
+        domain,
         chainId: 10143,
         issuedAt,
         expirationTime

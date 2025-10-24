@@ -80,9 +80,10 @@ export default async function handler(req, res) {
       }
 
       // Verify signature with enhanced message format
-      const domain = process.env.NEXT_PUBLIC_DOMAIN || 'localhost:3000';
+      const domain = process.env.NEXT_PUBLIC_DOMAIN || 'mine-kappa-vert.vercel.app';
       const chainId = 10143;
-      const issuedAt = nonceResult.rows[0].issued_at;
+      const issuedAt = new Date(nonceResult.rows[0].issued_at).toISOString();
+      console.log('Claim API - domain used:', domain);
       const message = `${domain} wants you to sign in with your Ethereum account:
 ${address}
 
@@ -99,7 +100,11 @@ Issued At: ${issuedAt}`;
         signature: signature.substring(0, 20) + '...', 
         message,
         addressLength: address.length,
-        signatureLength: signature.length
+        signatureLength: signature.length,
+        domain,
+        chainId,
+        nonce,
+        issuedAt
       });
       
       // Verify signature
