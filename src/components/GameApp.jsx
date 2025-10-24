@@ -71,11 +71,17 @@ export default function GameApp() {
       onChestFound: async (tickets = 0) => {
         // First, try to claim the chest through the API
         try {
+          console.log('Chest found! Starting claim process...', { address, currentYmd });
+          
           const message = `WE_CHEST:${address}:${currentYmd}`;
+          console.log('Message to sign:', message);
+          
           const signature = await window.ethereum.request({
             method: 'personal_sign',
             params: [message, address],
           });
+          
+          console.log('Signature received:', signature);
 
           // Send claim request
           const response = await fetch('/api/claim', {
@@ -88,7 +94,9 @@ export default function GameApp() {
             })
           });
 
+          console.log('API response status:', response.status);
           const data = await response.json();
+          console.log('API response data:', data);
 
           if (data.success && data.status === 'claimed') {
             // Update stats with server response
@@ -109,7 +117,7 @@ export default function GameApp() {
           }
         } catch (error) {
           console.error('Claim error:', error);
-          alert('Failed to claim chest. Please try again.');
+          alert('Failed to claim chest. Please try again. Error: ' + error.message);
           setGameState('start');
         }
       }
