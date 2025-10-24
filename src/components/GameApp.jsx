@@ -56,16 +56,19 @@ export default function GameApp() {
     fetchCurrentDate();
   }, []);
 
-  // Check if user can claim today and load player stats
+  // Check if user can play today and load player stats
   useEffect(() => {
-    const checkClaimStatusAndLoadStats = async () => {
+    const checkGameStatusAndLoadStats = async () => {
       if (!address || !currentYmd) return;
       
       try {
-        // Check claim status
-        const claimResponse = await fetch(`/api/claim?address=${address}&ymd=${currentYmd}`);
-        const claimData = await claimResponse.json();
-        setCanClaimToday(!claimData.claimed);
+        // Check game status (if user played today)
+        const gameStatusResponse = await fetch(`/api/game-status?address=${address}&ymd=${currentYmd}`);
+        const gameStatusData = await gameStatusResponse.json();
+        
+        if (gameStatusData.success) {
+          setCanClaimToday(gameStatusData.canPlayToday);
+        }
         
         // Load player stats
         const playerResponse = await fetch(`/api/players?address=${address}`);
@@ -77,11 +80,11 @@ export default function GameApp() {
           });
         }
       } catch (error) {
-        console.error('Failed to check claim status or load stats:', error);
+        console.error('Failed to check game status or load stats:', error);
       }
     };
     
-    checkClaimStatusAndLoadStats();
+    checkGameStatusAndLoadStats();
   }, [address, currentYmd]);
 
   // Update time until reset every minute
@@ -108,7 +111,8 @@ export default function GameApp() {
     if (!cvsRef.current || gameState !== 'playing') return;
     const engine = new GameEngine(cvsRef.current, {
       onRunEnd: async (runScore) => {
-        // Game ended without finding chest
+        // Game ended without finding chest - mark as played today
+        setCanClaimToday(false);
         setGameState('start');
       },
       onChestFound: async (tickets = 0) => {
