@@ -1,6 +1,6 @@
-import { createClient } from '@vercel/postgres';
+import { createPool } from '@vercel/postgres';
 
-const client = createClient({
+const pool = createPool({
   connectionString: process.env.POSTGRES_URL,
 });
 
@@ -28,7 +28,7 @@ export default async function handler(req, res) {
         orderBy = 'total_runs DESC, score DESC';
       }
 
-      const result = await client.query(`
+      const result = await pool.query(`
         SELECT 
           address,
           score,
@@ -43,7 +43,7 @@ export default async function handler(req, res) {
       `, [parseInt(limit)]);
 
       // Get total stats
-      const statsResult = await client.query(`
+      const statsResult = await pool.query(`
         SELECT 
           COUNT(*) as total_players,
           SUM(score) as total_score,
@@ -92,5 +92,5 @@ async function ensureTableExists() {
     CREATE INDEX IF NOT EXISTS idx_players_best_score ON players(best_score DESC);
   `;
   
-  await client.query(createTableQuery);
+  await pool.query(createTableQuery);
 }

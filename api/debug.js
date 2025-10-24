@@ -1,6 +1,6 @@
-import { createClient } from '@vercel/postgres';
+import { createPool } from '@vercel/postgres';
 
-const client = createClient({
+const pool = createPool({
   connectionString: process.env.POSTGRES_URL,
 });
 
@@ -16,10 +16,10 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       // Check database connection
-      const testQuery = await client.query('SELECT NOW() as current_time');
+      const testQuery = await pool.query('SELECT NOW() as current_time');
       
       // Get all player records
-      const playersQuery = await client.query(`
+      const playersQuery = await pool.query(`
         SELECT address, score, tickets, total_runs, best_score, created_at, updated_at 
         FROM players 
         ORDER BY score DESC 
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
       `);
       
       // Get statistics
-      const statsQuery = await client.query(`
+      const statsQuery = await pool.query(`
         SELECT 
           COUNT(*) as total_players,
           SUM(score) as total_score,
@@ -50,7 +50,7 @@ export default async function handler(req, res) {
       // Test record
       const { test_address = 'test_' + Date.now() } = req.body;
       
-      const result = await client.query(`
+      const result = await pool.query(`
         INSERT INTO players (address, score, tickets, total_runs, best_score)
         VALUES ($1, 100, 1, 1, 100)
         RETURNING *

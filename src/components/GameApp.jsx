@@ -17,6 +17,31 @@ export default function GameApp() {
   const [lastPlayDate, setLastPlayDate] = useState(null);
   const [cooldownTime, setCooldownTime] = useState(0);
 
+  // Load last play date from localStorage on mount
+  useEffect(() => {
+    const savedLastPlay = localStorage.getItem('lastPlayDate');
+    if (savedLastPlay) {
+      setLastPlayDate(savedLastPlay);
+    }
+  }, []);
+
+  // Update cooldown timer
+  useEffect(() => {
+    if (gameState === 'cooldown' && cooldownTime > 0) {
+      const timer = setInterval(() => {
+        setCooldownTime(prev => {
+          if (prev <= 1000) {
+            setGameState('start');
+            return 0;
+          }
+          return prev - 1000;
+        });
+      }, 1000);
+      
+      return () => clearInterval(timer);
+    }
+  }, [gameState, cooldownTime]);
+
   useEffect(() => {
     if (!cvsRef.current || gameState !== 'playing') return;
     const engine = new GameEngine(cvsRef.current, {
@@ -29,7 +54,9 @@ export default function GameApp() {
         }));
         
         // Set last play date to today
-        setLastPlayDate(new Date().toISOString());
+        const today = new Date().toISOString();
+        setLastPlayDate(today);
+        localStorage.setItem('lastPlayDate', today);
         
         try {
           await fetch("/api/players", {

@@ -1,6 +1,6 @@
-import { createClient } from '@vercel/postgres';
+import { createPool } from '@vercel/postgres';
 
-const client = createClient({
+const pool = createPool({
   connectionString: process.env.POSTGRES_URL,
 });
 
@@ -23,35 +23,35 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Address is required' });
       }
 
-      // Get or create player
-      let result = await client.query(
-        'SELECT * FROM players WHERE address = $1',
-        [address]
-      );
+          // Get or create player
+          let result = await pool.query(
+            'SELECT * FROM players WHERE address = $1',
+            [address]
+          );
 
-      if (result.rows.length === 0) {
-        // Create new player
-        result = await client.query(
-          `INSERT INTO players (address, score, tickets, total_runs, best_score)
-           VALUES ($1, $2, $3, 1, $2)
-           RETURNING *`,
-          [address, deltaScore, deltaTickets]
-        );
-      } else {
-        // Update existing player
-        const player = result.rows[0];
-        const newScore = player.score + deltaScore;
-        const newTickets = player.tickets + deltaTickets;
-        const newBest = Math.max(player.best_score, deltaScore);
-        
-        result = await client.query(
-          `UPDATE players 
-           SET score = $2, tickets = $3, total_runs = total_runs + 1, best_score = $4
-           WHERE address = $1
-           RETURNING *`,
-          [address, newScore, newTickets, newBest]
-        );
-      }
+          if (result.rows.length === 0) {
+            // Create new player
+            result = await pool.query(
+              `INSERT INTO players (address, score, tickets, total_runs, best_score)
+               VALUES ($1, $2, $3, 1, $2)
+               RETURNING *`,
+              [address, deltaScore, deltaTickets]
+            );
+          } else {
+            // Update existing player
+            const player = result.rows[0];
+            const newScore = player.score + deltaScore;
+            const newTickets = player.tickets + deltaTickets;
+            const newBest = Math.max(player.best_score, deltaScore);
+            
+            result = await pool.query(
+              `UPDATE players 
+               SET score = $2, tickets = $3, total_runs = total_runs + 1, best_score = $4
+               WHERE address = $1
+               RETURNING *`,
+              [address, newScore, newTickets, newBest]
+            );
+          }
 
       return res.json(result.rows[0]);
     }
@@ -59,24 +59,24 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       const { address } = req.query;
       
-      if (address) {
-        const result = await client.query(
-          'SELECT * FROM players WHERE address = $1',
-          [address]
-        );
-        
-        if (result.rows.length === 0) {
-          return res.status(404).json({ error: 'Player not found' });
-        }
-        
-        return res.json(result.rows[0]);
-      } else {
-        // Get leaderboard
-        const result = await client.query(
-          'SELECT address, score, tickets, best_score, total_runs FROM players ORDER BY score DESC LIMIT 10'
-        );
-        return res.json(result.rows);
-      }
+          if (address) {
+            const result = await pool.query(
+              'SELECT * FROM players WHERE address = $1',
+              [address]
+            );
+            
+            if (result.rows.length === 0) {
+              return res.status(404).json({ error: 'Player not found' });
+            }
+            
+            return res.json(result.rows[0]);
+          } else {
+            // Get leaderboard
+            const result = await pool.query(
+              'SELECT address, score, tickets, best_score, total_runs FROM players ORDER BY score DESC LIMIT 10'
+            );
+            return res.json(result.rows);
+          }
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
@@ -103,5 +103,5 @@ async function ensureTableExists() {
     CREATE INDEX IF NOT EXISTS idx_players_score ON players(score DESC);
   `;
   
-  await client.query(createTableQuery);
+  await pool.query(createTableQuery);
 }

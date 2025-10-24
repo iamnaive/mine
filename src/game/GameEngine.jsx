@@ -280,8 +280,8 @@ export default class GameEngine {
       this.player.jumping = false;
     }
     
-    // Gravity
-    this.player.vy += 0.8;
+    // Gravity (reduced for smoother jump)
+    this.player.vy += 0.5;
     
     // Save old position for collisions
     const oldX = this.player.x;
