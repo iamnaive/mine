@@ -1,26 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { signMessage } from "@wagmi/core";
 import { config } from "../wagmi";
 import GameEngine from "../game/GameEngine";
 import Leaderboard from "./Leaderboard";
-
-// Helper function for signing with wagmi or fallback
-async function signWithWagmiOrFallback(address, message) {
-  try {
-    // wagmi v2 requires config + account
-    const sig = await signMessage(config, { account: address, message });
-    return sig;
-  } catch (e) {
-    console.warn("[MINE] wagmi signMessage failed, trying personal_sign fallback", e);
-    // Fallback to window.ethereum if available
-    const eth = globalThis.ethereum;
-    if (!eth) throw new Error("No ethereum provider for personal_sign");
-    // important: personal_sign params order = [message, address]
-    const sig = await eth.request({ method: "personal_sign", params: [message, address] });
-    return sig;
-  }
-}
 
 export default function GameApp() {
   const cvsRef = useRef(null);
@@ -36,6 +19,23 @@ export default function GameApp() {
   const [gameEngine, setGameEngine] = useState(null);
   const [canClaimToday, setCanClaimToday] = useState(true);
   const [currentYmd, setCurrentYmd] = useState(null);
+
+  // Helper function for signing with wagmi or fallback
+  const signWithWagmiOrFallback = useCallback(async (address, message) => {
+    try {
+      // wagmi v2 requires config + account
+      const sig = await signMessage(config, { account: address, message });
+      return sig;
+    } catch (e) {
+      console.warn("[MINE] wagmi signMessage failed, trying personal_sign fallback", e);
+      // Fallback to window.ethereum if available
+      const eth = globalThis.ethereum;
+      if (!eth) throw new Error("No ethereum provider for personal_sign");
+      // important: personal_sign params order = [message, address]
+      const sig = await eth.request({ method: "personal_sign", params: [message, address] });
+      return sig;
+    }
+  }, []);
   const [showInstructions, setShowInstructions] = useState(false);
   const [timeUntilReset, setTimeUntilReset] = useState(null);
 

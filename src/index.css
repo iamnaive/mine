@@ -98,8 +98,8 @@ canvas {
 }
 
 .start-btn {
-  background: #ffffff;
-  color: #000000;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: #ffffff;
   border: none;
   padding: 16px 32px;
   font-size: 16px;
@@ -113,15 +113,26 @@ canvas {
   align-items: center;
   justify-content: center;
   font-family: inherit;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-.start-btn:hover {
-  background: #f7f8fa;
-  transform: translateY(-1px);
+.start-btn:disabled {
+  background: linear-gradient(135deg, #6b7280, #9ca3af);
+  color: #ffffff;
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
 }
 
-.start-btn:active {
+.start-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.start-btn:active:not(:disabled) {
   transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 .help-btn {
@@ -576,4 +587,28 @@ canvas {
 
 .lottery-btn:hover {
   background: #f59e0b;
+}
+
+/* RainbowKit Connect Button Custom Styles */
+[data-rk] button {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 12px 24px !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+}
+
+[data-rk] button:hover {
+  background: linear-gradient(135deg, #059669, #047857) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4) !important;
+}
+
+[data-rk] button:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3) !important;
 }
