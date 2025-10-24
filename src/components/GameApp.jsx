@@ -1,18 +1,21 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useAccount } from "wagmi";
 import GameEngine from "../game/GameEngine";
+import Leaderboard from "./Leaderboard";
 
 export default function GameApp() {
   const cvsRef = useRef(null);
   const { address, isConnected } = useAccount();
 
-  const [gameState, setGameState] = useState('start'); // 'start', 'playing', 'chest-found'
+  const [gameState, setGameState] = useState('start'); // 'start', 'playing', 'chest-found', 'cooldown'
   const [stats, setStats] = useState({
     runs: 0,
     best: 0,
     score: 0,
     tickets: 0
   });
+  const [lastPlayDate, setLastPlayDate] = useState(null);
+  const [cooldownTime, setCooldownTime] = useState(0);
 
   useEffect(() => {
     if (!cvsRef.current || gameState !== 'playing') return;
@@ -24,6 +27,10 @@ export default function GameApp() {
           best: Math.max(s.best, runScore),
           score: s.score + runScore
         }));
+        
+        // Set last play date to today
+        setLastPlayDate(new Date().toISOString());
+        
         try {
           await fetch("/api/players", {
             method: "POST",
@@ -45,11 +52,33 @@ export default function GameApp() {
     return () => engine.destroy();
   }, [address, isConnected, gameState]);
 
+  const checkCooldown = () => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const lastPlay = lastPlayDate ? new Date(lastPlayDate) : null;
+    
+    if (lastPlay && lastPlay >= today) {
+      // Already played today
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const timeLeft = tomorrow.getTime() - now.getTime();
+      setCooldownTime(timeLeft);
+      return false;
+    }
+    return true;
+  };
+
   const startGame = () => {
     if (!isConnected) {
       alert('Please connect your wallet to start the game');
       return;
     }
+    
+    if (!checkCooldown()) {
+      setGameState('cooldown');
+      return;
+    }
+    
     setGameState('playing');
   };
 
@@ -72,8 +101,10 @@ export default function GameApp() {
             <li>Space - jump</li>
             <li>Click blocks - mining</li>
             <li>Find the chest in 3 minutes!</li>
+            <li>One game per day</li>
           </ul>
         </div>
+        <Leaderboard />
       </div>
     );
   }
@@ -87,6 +118,28 @@ export default function GameApp() {
           <p>Score: {stats.score}</p>
           <button className="reset-btn" onClick={resetGame}>
             Play Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (gameState === 'cooldown') {
+    const hours = Math.floor(cooldownTime / (1000 * 60 * 60));
+    const minutes = Math.floor((cooldownTime % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((cooldownTime % (1000 * 60)) / 1000);
+    
+    return (
+      <div className="cooldown-screen">
+        <div className="cooldown-message">
+          <h1>⏰ Daily Cooldown</h1>
+          <p>You've already played today!</p>
+          <p>Next game available in:</p>
+          <div className="countdown">
+            {hours.toString().padStart(2, '0')}:{minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}
+          </div>
+          <button className="reset-btn" onClick={resetGame}>
+            Back to Menu
           </button>
         </div>
       </div>
@@ -116,9 +169,6 @@ export default function GameApp() {
           style={{ width: '100vw', height: 'calc(100vh - 100px)' }}
         />
       </div>
-      <p style={{ opacity: 0.7, fontSize: 12 }}>
-        Tip: Diamond Yarn drop chance is ~0.5% per chest-equivalent. This demo accrues it to "tickets".
-      </p>
     </>
   );
 }

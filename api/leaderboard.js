@@ -13,92 +13,84 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
   try {
-    const { type = 'score', limit = 10 } = req.query;
-    
-    let query;
-    let params = [parseInt(limit)];
-    
-    switch (type) {
-      case 'score':
-        query = `
-          SELECT 
-            address,
-            score,
-            tickets,
-            best_score,
-            total_runs,
-            RANK() OVER (ORDER BY score DESC) as rank
-          FROM players 
-          ORDER BY score DESC 
-          LIMIT $1
-        `;
-        break;
-        
-      case 'tickets':
-        query = `
-          SELECT 
-            address,
-            score,
-            tickets,
-            best_score,
-            total_runs,
-            RANK() OVER (ORDER BY tickets DESC) as rank
-          FROM players 
-          ORDER BY tickets DESC 
-          LIMIT $1
-        `;
-        break;
-        
-      case 'best_score':
-        query = `
-          SELECT 
-            address,
-            score,
-            tickets,
-            best_score,
-            total_runs,
-            RANK() OVER (ORDER BY best_score DESC) as rank
-          FROM players 
-          ORDER BY best_score DESC 
-          LIMIT $1
-        `;
-        break;
-        
-      default:
-        return res.status(400).json({ error: 'Invalid leaderboard type' });
+    await ensureTableExists();
+
+    if (req.method === 'GET') {
+      const { limit = 10, type = 'score' } = req.query;
+      
+      let orderBy = 'score DESC';
+      if (type === 'tickets') {
+        orderBy = 'tickets DESC, score DESC';
+      } else if (type === 'best') {
+        orderBy = 'best_score DESC, score DESC';
+      } else if (type === 'runs') {
+        orderBy = 'total_runs DESC, score DESC';
+      }
+
+      const result = await client.query(`
+        SELECT 
+          address,
+          score,
+          tickets,
+          best_score,
+          total_runs,
+          created_at,
+          updated_at
+        FROM players 
+        ORDER BY ${orderBy}
+        LIMIT $1
+      `, [parseInt(limit)]);
+
+      // Get total stats
+      const statsResult = await client.query(`
+        SELECT 
+          COUNT(*) as total_players,
+          SUM(score) as total_score,
+          SUM(tickets) as total_tickets,
+          AVG(score) as avg_score,
+          MAX(score) as max_score,
+          MAX(best_score) as max_best_score
+        FROM players
+      `);
+
+      return res.json({
+        success: true,
+        leaderboard: result.rows,
+        stats: statsResult.rows[0],
+        type: type,
+        limit: parseInt(limit)
+      });
     }
-    
-    const result = await client.query(query, params);
-    
-    const leaderboard = result.rows.map(row => ({
-      rank: parseInt(row.rank),
-      address: row.address,
-      score: row.score,
-      tickets: row.tickets,
-      bestScore: row.best_score,
-      totalRuns: row.total_runs,
-      displayAddress: formatAddress(row.address)
-    }));
-    
-    return res.json({
-      type,
-      limit: parseInt(limit),
-      data: leaderboard,
-      generatedAt: new Date().toISOString()
-    });
-    
+
+    return res.status(405).json({ error: 'Method not allowed' });
   } catch (error) {
     console.error('Leaderboard API Error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ 
+      error: 'Database error', 
+      details: error.message 
+    });
   }
 }
 
-function formatAddress(address) {
-  if (!address) return '';
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+async function ensureTableExists() {
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS players (
+      id SERIAL PRIMARY KEY,
+      address VARCHAR(42) UNIQUE NOT NULL,
+      score INTEGER DEFAULT 0,
+      tickets INTEGER DEFAULT 0,
+      total_runs INTEGER DEFAULT 0,
+      best_score INTEGER DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    CREATE INDEX IF NOT EXISTS idx_players_address ON players(address);
+    CREATE INDEX IF NOT EXISTS idx_players_score ON players(score DESC);
+    CREATE INDEX IF NOT EXISTS idx_players_tickets ON players(tickets DESC);
+    CREATE INDEX IF NOT EXISTS idx_players_best_score ON players(best_score DESC);
+  `;
+  
+  await client.query(createTableQuery);
 }

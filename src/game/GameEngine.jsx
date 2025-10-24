@@ -8,9 +8,9 @@ export default class GameEngine {
     this.width = canvas.width;
     this.height = canvas.height;
     
-    // Block size (2-2.5x larger than player)
-    this.blockSize = 40;
-    this.playerSize = 16;
+    // Block size (2-2.5x larger than player) - doubled scale
+    this.blockSize = 80;
+    this.playerSize = 32;
     
     // Block grid
     this.gridWidth = Math.ceil(this.width / this.blockSize);
@@ -94,6 +94,10 @@ export default class GameEngine {
     // Keyboard
     document.addEventListener('keydown', (e) => {
       this.keys[e.code] = true;
+      // Prevent page scrolling when game is active
+      if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+        e.preventDefault();
+      }
     });
     
     document.addEventListener('keyup', (e) => {
@@ -110,11 +114,21 @@ export default class GameEngine {
     this.canvas.addEventListener('mousedown', (e) => {
       this.mouse.down = true;
       this.handleMining();
+      e.preventDefault(); // Prevent text selection
     });
     
     this.canvas.addEventListener('mouseup', () => {
       this.mouse.down = false;
     });
+    
+    // Prevent context menu on right click
+    this.canvas.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+    });
+    
+    // Focus canvas for keyboard events
+    this.canvas.tabIndex = 0;
+    this.canvas.focus();
   }
   
   handleMining() {
