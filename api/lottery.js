@@ -8,9 +8,20 @@ const pool = createPool({
 });
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // Restrict CORS to specific domains
+  const allowedOrigins = [
+    'https://your-app.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5173'
+  ];
+  
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Vary', 'Origin');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -74,14 +85,43 @@ export default async function handler(req, res) {
 
     if (req.method === 'POST') {
       // Play lottery
-      const { address, prizeId, signature } = req.body;
+      const { address, prizeId, signature, nonce } = req.body;
       
-      if (!address || !prizeId || !signature) {
-        return res.status(400).json({ error: 'Address, prizeId, and signature are required' });
+      if (!address || !prizeId || !signature || !nonce) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Address, prizeId, signature, and nonce are required' 
+        });
       }
 
-      // Verify signature
-      const message = `LOTTERY:${address}:${prizeId}`;
+      // Verify nonce first
+      const nonceResult = await pool.query(
+        'SELECT * FROM auth_nonces WHERE address = $1 AND nonce = $2 AND expires_at > NOW()',
+        [address.toLowerCase(), nonce]
+      );
+
+      if (nonceResult.rows.length === 0) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Invalid or expired nonce' 
+        });
+      }
+
+      // Verify signature with enhanced message format
+      const domain = process.env.NEXT_PUBLIC_DOMAIN || 'localhost:3000';
+      const chainId = 10143;
+      const issuedAt = nonceResult.rows[0].issued_at;
+      const message = `${domain} wants you to sign in with your Ethereum account:
+${address}
+
+Claim lottery prize ${prizeId}
+
+URI: https://${domain}
+Version: 1
+Chain ID: ${chainId}
+Nonce: ${nonce}
+Issued At: ${issuedAt}`;
+
       let recoveredAddress;
       try {
         recoveredAddress = await recoverMessageAddress({
@@ -90,8 +130,17 @@ export default async function handler(req, res) {
         });
       } catch (error) {
         console.error('Signature verification failed:', error);
-        return res.status(400).json({ error: 'Invalid signature' });
+        return res.status(400).json({ 
+          success: false,
+          error: 'Invalid signature' 
+        });
       }
+
+      // Consume nonce
+      await pool.query(
+        'DELETE FROM auth_nonces WHERE address = $1 AND nonce = $2',
+        [address.toLowerCase(), nonce]
+      );
 
       if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
         return res.status(400).json({ error: 'Signature does not match address' });

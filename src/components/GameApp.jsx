@@ -145,7 +145,30 @@ export default function GameApp() {
             }
           }
           
-          const message = `WE_CHEST:${address}:${currentYmd}`;
+          // First, get nonce from server
+          const nonceResponse = await fetch(`/api/auth/nonce?address=${address}`);
+          const nonceData = await nonceResponse.json();
+          
+          if (!nonceData.success) {
+            alert('Failed to get authentication nonce. Please try again.');
+            setGameState('start');
+            return;
+          }
+          
+          const { nonce, domain, chainId, issuedAt, expirationTime } = nonceData;
+          
+          // Create SIWE-style message
+          const message = `${domain} wants you to sign in with your Ethereum account:
+${address}
+
+Claim daily chest for ${currentYmd}
+
+URI: https://${domain}
+Version: 1
+Chain ID: ${chainId}
+Nonce: ${nonce}
+Issued At: ${issuedAt}`;
+          
           console.log('Message to sign:', message);
           
           // Use wagmi signMessage with fallback
@@ -153,14 +176,15 @@ export default function GameApp() {
           
           console.log('Signature received:', signature);
 
-          // Send claim request
+          // Send claim request with nonce
           const response = await fetch('/api/claim', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               address: address, // Keep original address for signature verification
               ymd: currentYmd,
-              signature
+              signature,
+              nonce
             })
           });
 
