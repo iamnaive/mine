@@ -1,4 +1,4 @@
-export const config = { runtime: "nodejs20.x" };
+export const config = { runtime: "nodejs" };
 
 import { createPool } from '@vercel/postgres';
 import { recoverMessageAddress } from 'viem';
