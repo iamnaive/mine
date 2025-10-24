@@ -143,3 +143,4 @@ async function ensureTablesExist() {
   await pool.query(createPlayersTable);
   await pool.query(addMissingColumns);
 }
+

@@ -127,6 +127,24 @@ export default function GameApp() {
       onRunEnd: async (runScore) => {
         // Game ended without finding chest - mark as played today
         setCanClaimToday(false);
+        
+        // Send final score to server
+        if (address && runScore > 0) {
+          try {
+            await fetch('/api/update-score', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                address: address,
+                score: runScore
+              })
+            });
+            console.log('Final score sent to server:', runScore);
+          } catch (error) {
+            console.error('Failed to send final score:', error);
+          }
+        }
+        
         setGameState('start');
       },
       onScoreUpdate: async (points) => {

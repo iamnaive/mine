@@ -25,3 +25,4 @@ const LoadingScreen = ({ progress, isLoading }) => {
 };
 
 export default LoadingScreen;
+

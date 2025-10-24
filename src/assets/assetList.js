@@ -26,3 +26,4 @@ export const GAME_ASSETS = [
     type: 'block'
   }
 ];
+
