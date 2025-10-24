@@ -57,63 +57,25 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      const { address, ymd, signature, nonce } = req.body;
+      const { address, ymd, signature } = req.body;
       
       console.log('Claim POST request received:', {
         address: address ? `${address.substring(0, 10)}...` : 'missing',
         ymd,
-        signature: signature ? `${signature.substring(0, 20)}...` : 'missing',
-        nonce: nonce ? `${nonce.substring(0, 10)}...` : 'missing'
+        signature: signature ? `${signature.substring(0, 20)}...` : 'missing'
       });
       
-      if (!address || !ymd || !signature || !nonce) {
-        console.log('Missing required fields:', { address: !!address, ymd: !!ymd, signature: !!signature, nonce: !!nonce });
+      if (!address || !ymd || !signature) {
+        console.log('Missing required fields:', { address: !!address, ymd: !!ymd, signature: !!signature });
         return res.status(400).json({ 
           success: false,
-          error: 'Address, ymd, signature, and nonce are required' 
+          error: 'Address, ymd, and signature are required' 
         });
       }
 
-      // Verify nonce first
-      const nonceResult = await pool.query(
-        'SELECT * FROM auth_nonces WHERE address = $1 AND nonce = $2 AND expires_at > NOW()',
-        [address.toLowerCase(), nonce]
-      );
-
-      if (nonceResult.rows.length === 0) {
-        return res.status(400).json({ 
-          success: false,
-          error: 'Invalid or expired nonce' 
-        });
-      }
-
-      // Verify signature with enhanced message format
-      const domain = process.env.NEXT_PUBLIC_DOMAIN || 'mine-kappa-vert.vercel.app';
-      const chainId = 10143;
-      const issuedAt = new Date(nonceResult.rows[0].issued_at).toISOString();
-      console.log('Claim API - domain used:', domain);
-      const message = `${domain} wants you to sign in with your Ethereum account:
-${address}
-
-Claim daily chest for ${ymd}
-
-URI: https://${domain}
-Version: 1
-Chain ID: ${chainId}
-Nonce: ${nonce}
-Issued At: ${issuedAt}`;
-      console.log('Claim attempt:', { 
-        address, 
-        ymd, 
-        signature: signature.substring(0, 20) + '...', 
-        message,
-        addressLength: address.length,
-        signatureLength: signature.length,
-        domain,
-        chainId,
-        nonce,
-        issuedAt
-      });
+      // Simple signature verification (working version)
+      const message = `WE_CHEST:${address}:${ymd}`;
+      console.log('Verifying signature for message:', message);
       
       // Verify signature
       let recoveredAddress;
@@ -130,8 +92,6 @@ Issued At: ${issuedAt}`;
       console.log('Signature verification result:', { 
         recoveredAddress, 
         originalAddress: address,
-        recoveredLower: recoveredAddress.toLowerCase(),
-        originalLower: address.toLowerCase(),
         match: recoveredAddress.toLowerCase() === address.toLowerCase()
       });
 
@@ -142,12 +102,6 @@ Issued At: ${issuedAt}`;
           error: 'Signature does not match address' 
         });
       }
-
-      // Consume nonce
-      await pool.query(
-        'DELETE FROM auth_nonces WHERE address = $1 AND nonce = $2',
-        [address.toLowerCase(), nonce]
-      );
 
       // Normalize address to lowercase for database operations
       const normalizedAddress = address.toLowerCase();

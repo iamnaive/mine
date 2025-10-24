@@ -160,60 +160,24 @@ export default function GameApp() {
             }
           }
           
-          // First, get nonce from server
-          console.log('Requesting nonce for address:', address);
-          const nonceResponse = await fetch(`/api/auth/nonce?address=${address}`);
-          console.log('Nonce response status:', nonceResponse.status);
-          const nonceData = await nonceResponse.json();
-          console.log('Nonce data:', nonceData);
-          
-          if (!nonceData.success) {
-            console.error('Nonce request failed:', nonceData);
-            alert('Failed to get authentication nonce. Please try again.');
-            setGameState('start');
-            return;
-          }
-          
-          const { nonce, domain, chainId: serverChainId, issuedAt, expirationTime } = nonceData;
-          
-          // Create SIWE-style message (must match server exactly)
-          const message = `${domain} wants you to sign in with your Ethereum account:
-${address}
-
-Claim daily chest for ${currentYmd}
-
-URI: https://${domain}
-Version: 1
-Chain ID: ${serverChainId}
-Nonce: ${nonce}
-Issued At: ${issuedAt}`;
-          
-          console.log('Client message to sign:', message);
-          console.log('Client message components:', {
-            domain,
-            address,
-            currentYmd,
-            serverChainId,
-            nonce,
-            issuedAt
-          });
+          // Simple signature (working version)
+          const message = `WE_CHEST:${address}:${currentYmd}`;
+          console.log('Signing message:', message);
           
           // Use wagmi signMessage with fallback
           const signature = await signWithWagmiOrFallback(address, message);
           
           console.log('Signature received:', signature);
 
-          // Send claim request with nonce
+          // Send claim request
           const claimData = {
             address: address, // Keep original address for signature verification
             ymd: currentYmd,
-            signature,
-            nonce
+            signature
           };
           console.log('Sending claim request with data:', {
             ...claimData,
-            signature: signature.substring(0, 20) + '...',
-            nonce: nonce.substring(0, 10) + '...'
+            signature: signature.substring(0, 20) + '...'
           });
           
           const response = await fetch('/api/claim', {
