@@ -4,6 +4,9 @@ import { signMessage } from "@wagmi/core";
 import { config } from "../wagmi";
 import GameEngine from "../game/GameEngine";
 import Leaderboard from "./Leaderboard";
+import LoadingScreen from "./LoadingScreen";
+import { useAssetLoader } from "../hooks/useAssetLoader";
+import { GAME_ASSETS } from "../assets/assetList";
 
 export default function GameApp() {
   const cvsRef = useRef(null);
@@ -19,8 +22,9 @@ export default function GameApp() {
   const [gameEngine, setGameEngine] = useState(null);
   const [canClaimToday, setCanClaimToday] = useState(true);
   const [currentYmd, setCurrentYmd] = useState(null);
-  const [imagesLoaded, setImagesLoaded] = useState(false);
-  const [loadingProgress, setLoadingProgress] = useState(0);
+  
+  // Asset loading
+  const { isLoading: assetsLoading, progress: assetsProgress, loadedAssets, loadAssets } = useAssetLoader();
 
   // Helper function for signing with wagmi or fallback
   const signWithWagmiOrFallback = useCallback(async (address, message) => {
@@ -109,23 +113,15 @@ export default function GameApp() {
     return () => clearInterval(interval);
   }, []);
 
-  // Handle transition from loading to playing when images are loaded
+  // Handle transition from loading to playing when assets are loaded
   useEffect(() => {
-    if (gameState === 'loading' && imagesLoaded) {
+    if (gameState === 'loading' && !assetsLoading && Object.keys(loadedAssets).length > 0) {
       setGameState('playing');
     }
-  }, [gameState, imagesLoaded]);
-
-  // Reset loading state when starting new game
-  useEffect(() => {
-    if (gameState === 'loading') {
-      setImagesLoaded(false);
-      setLoadingProgress(0);
-    }
-  }, [gameState]);
+  }, [gameState, assetsLoading, loadedAssets]);
 
   useEffect(() => {
-    if (!cvsRef.current || gameState !== 'loading') return;
+    if (!cvsRef.current || gameState !== 'playing') return;
     
     const engine = new GameEngine(cvsRef.current, {
       onRunEnd: async (runScore) => {
@@ -133,12 +129,7 @@ export default function GameApp() {
         setCanClaimToday(false);
         setGameState('start');
       },
-      onImagesLoaded: () => {
-        setImagesLoaded(true);
-      },
-      onLoadingProgress: (progress) => {
-        setLoadingProgress(progress);
-      },
+      loadedAssets: loadedAssets,
       onChestFound: async (tickets = 0) => {
         // First, try to claim the chest through the API
         try {
@@ -310,9 +301,9 @@ Issued At: ${issuedAt}`;
       return;
     }
     
-    // Start loading screen
+    // Start loading assets
     setGameState('loading');
-    setImagesLoaded(false);
+    loadAssets(GAME_ASSETS);
   };
 
   const resetGame = () => {
@@ -464,27 +455,6 @@ Issued At: ${issuedAt}`;
         );
       }
 
-      if (gameState === 'loading') {
-        return (
-          <div className="loading-screen">
-            <div className="loading-content">
-              <h2>⛏️ Loading Mine...</h2>
-              <div className="loading-spinner"></div>
-              <p>Preparing blocks and textures...</p>
-              <div className="progress-container">
-                <div className="progress-bar">
-                  <div 
-                    className="progress-fill" 
-                    style={{ width: `${loadingProgress}%` }}
-                  ></div>
-                </div>
-                <p className="progress-text">{Math.round(loadingProgress)}%</p>
-              </div>
-              <p className="loading-subtitle">Loading block textures...</p>
-            </div>
-          </div>
-        );
-      }
 
       if (gameState === 'chest-found') {
         return (
@@ -506,18 +476,20 @@ Issued At: ${issuedAt}`;
 
   return (
     <>
-          <div className="kv">
-            <div>Address</div>
-            <div>{isConnected ? address : "Not connected"}</div>
-            <div>Network</div>
-            <div>{chainId === 10143 ? "Monad Testnet ✅" : `Chain ${chainId} ❌`}</div>
-            <div>Total Claims</div>
-            <div>{stats.totalClaims}</div>
-            <div>Tickets</div>
-            <div>{stats.tickets}</div>
-            <div>Can Claim Today</div>
-            <div>{canClaimToday ? "Yes" : "No"}</div>
-          </div>
+      <LoadingScreen progress={assetsProgress} isLoading={assetsLoading} />
+      
+      <div className="kv">
+        <div>Address</div>
+        <div>{isConnected ? address : "Not connected"}</div>
+        <div>Network</div>
+        <div>{chainId === 10143 ? "Monad Testnet ✅" : `Chain ${chainId} ❌`}</div>
+        <div>Total Claims</div>
+        <div>{stats.totalClaims}</div>
+        <div>Tickets</div>
+        <div>{stats.tickets}</div>
+        <div>Can Claim Today</div>
+        <div>{canClaimToday ? "Yes" : "No"}</div>
+      </div>
 
       <div className="canvas-wrap">
         <canvas 

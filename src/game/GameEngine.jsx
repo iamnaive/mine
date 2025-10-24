@@ -1,11 +1,10 @@
 export default class GameEngine {
-  constructor(canvas, { onRunEnd, onChestFound, onImagesLoaded, onLoadingProgress }) {
+  constructor(canvas, { onRunEnd, onChestFound, loadedAssets }) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.onRunEnd = onRunEnd;
     this.onChestFound = onChestFound;
-    this.onImagesLoaded = onImagesLoaded;
-    this.onLoadingProgress = onLoadingProgress;
+    this.loadedAssets = loadedAssets || {};
     
     this.width = canvas.width;
     this.height = canvas.height;
@@ -14,9 +13,8 @@ export default class GameEngine {
     this.blockSize = 100;
     this.playerSize = 40;
     
-    // Load block images
-    this.blockImages = {};
-    this.loadBlockImages();
+    // Use loaded assets
+    this.blockImages = this.loadedAssets;
     
     // Block grid
     this.gridWidth = Math.ceil(this.width / this.blockSize);
@@ -42,85 +40,12 @@ export default class GameEngine {
     
     this.keys = {};
     this.mouse = { x: 0, y: 0, down: false };
-    this.gameLoopRunning = false;
     
     this.generateWorld();
     this.setupEvents();
-    
-    // Only start game loop if we're in playing state
-    // For loading state, we just load images
-    if (this.onImagesLoaded) {
-      // We're in loading mode, don't start game loop yet
-      console.log('GameEngine created in loading mode');
-    } else {
-      // We're in playing mode, start game loop
-      this.gameLoop();
-    }
+    this.gameLoop();
   }
   
-  loadBlockImages() {
-    const blockTypes = ['stone', 'iron', 'gold', 'diamond'];
-    const imageFiles = ['b4.png', 'b2.png', 'b3.png', 'b1.png']; // b4=stone, b1=diamond
-    
-    let loadedCount = 0;
-    const totalImages = blockTypes.length + 1; // +1 for b5.png
-    
-    const updateProgress = () => {
-      const progress = (loadedCount / totalImages) * 100;
-      if (this.onLoadingProgress) {
-        this.onLoadingProgress(progress);
-      }
-    };
-    
-    const checkAllLoaded = () => {
-      loadedCount++;
-      updateProgress();
-      
-      if (loadedCount >= totalImages && this.onImagesLoaded) {
-        console.log('All block images loaded!');
-        this.onImagesLoaded();
-        // Start game loop after images are loaded
-        this.startGameLoop();
-      }
-    };
-    
-    // Start with 0% progress
-    updateProgress();
-    
-    blockTypes.forEach((type, index) => {
-      const img = new Image();
-      img.onload = () => {
-        console.log(`Loaded block image: ${type} (${imageFiles[index]})`);
-        checkAllLoaded();
-      };
-      img.onerror = () => {
-        console.error(`Failed to load block image: ${imageFiles[index]}`);
-        checkAllLoaded(); // Still count as "loaded" to not block the game
-      };
-      img.src = `/images/${imageFiles[index]}`;
-      this.blockImages[type] = img;
-    });
-    
-    // Use b5.png for special blocks or as fallback
-    const specialImg = new Image();
-    specialImg.onload = () => {
-      console.log('Loaded special block image: b5.png');
-      checkAllLoaded();
-    };
-    specialImg.onerror = () => {
-      console.error('Failed to load special block image: b5.png');
-      checkAllLoaded();
-    };
-    specialImg.src = '/images/b5.png';
-    this.blockImages['special'] = specialImg;
-  }
-
-  startGameLoop() {
-    if (!this.gameLoopRunning) {
-      this.gameLoopRunning = true;
-      this.gameLoop();
-    }
-  }
 
   generateWorld() {
     // Fill the entire grid with blocks
