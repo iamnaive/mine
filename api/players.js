@@ -24,11 +24,14 @@ export default async function handler(req, res) {
           if (!address) {
             return res.status(400).json({ error: 'Address is required' });
           }
+          
+          // Normalize address to lowercase
+          const normalizedAddress = address.toLowerCase();
 
           // Get or create player
           let result = await pool.query(
             'SELECT * FROM players WHERE address = $1',
-            [address]
+            [normalizedAddress]
           );
 
           if (result.rows.length === 0) {
@@ -37,7 +40,7 @@ export default async function handler(req, res) {
               `INSERT INTO players (address, tickets, total_claims)
                VALUES ($1, $2, 1)
                RETURNING *`,
-              [address, deltaTickets]
+              [normalizedAddress, deltaTickets]
             );
           } else {
             // Update existing player
@@ -49,7 +52,7 @@ export default async function handler(req, res) {
                SET tickets = $2, total_claims = total_claims + 1
                WHERE address = $1
                RETURNING *`,
-              [address, newTickets]
+              [normalizedAddress, newTickets]
             );
           }
 
@@ -60,9 +63,10 @@ export default async function handler(req, res) {
           const { address } = req.query;
           
           if (address) {
+            const normalizedAddress = address.toLowerCase();
             const result = await pool.query(
               'SELECT * FROM players WHERE address = $1',
-              [address]
+              [normalizedAddress]
             );
             
             if (result.rows.length === 0) {

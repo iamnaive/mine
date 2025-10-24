@@ -1,6 +1,7 @@
 export const config = { runtime: "nodejs" };
 
 import { createPool } from '@vercel/postgres';
+import { recoverMessageAddress } from 'viem';
 
 const pool = createPool({
   connectionString: process.env.POSTGRES_URL,
@@ -44,10 +45,25 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Address, ymd, and signature are required' });
       }
 
-      // For now, skip signature verification to test the flow
-      // TODO: Implement proper signature verification
+      // Verify signature
       const message = `WE_CHEST:${address}:${ymd}`;
       console.log('Claim attempt:', { address, ymd, signature, message });
+      
+      let recoveredAddress;
+      try {
+        recoveredAddress = await recoverMessageAddress({
+          message,
+          signature
+        });
+      } catch (error) {
+        console.error('Signature verification failed:', error);
+        return res.status(400).json({ error: 'Invalid signature' });
+      }
+
+      if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
+        console.error('Signature does not match address:', { recoveredAddress, address });
+        return res.status(400).json({ error: 'Signature does not match address' });
+      }
 
       // Check if already claimed today
       const existingClaim = await pool.query(

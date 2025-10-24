@@ -12,7 +12,16 @@ export default function Leaderboard() {
     // Auto-refresh every 30 seconds
     const interval = setInterval(fetchLeaderboard, 30000);
     
-    return () => clearInterval(interval);
+    // Listen for manual refresh events
+    const handleRefresh = () => {
+      fetchLeaderboard();
+    };
+    window.addEventListener('leaderboard-refresh', handleRefresh);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('leaderboard-refresh', handleRefresh);
+    };
   }, [type]);
 
   const fetchLeaderboard = async () => {

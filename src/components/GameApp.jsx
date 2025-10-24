@@ -1,11 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useSignMessage, useChainId, useSwitchChain } from "wagmi";
 import GameEngine from "../game/GameEngine";
 import Leaderboard from "./Leaderboard";
 
 export default function GameApp() {
   const cvsRef = useRef(null);
   const { address, isConnected } = useAccount();
+  const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
+  const { signMessageAsync } = useSignMessage();
 
   const [gameState, setGameState] = useState('start'); // 'start', 'playing', 'chest-found'
   const [stats, setStats] = useState({
@@ -71,14 +74,28 @@ export default function GameApp() {
       onChestFound: async (tickets = 0) => {
         // First, try to claim the chest through the API
         try {
-          console.log('Chest found! Starting claim process...', { address, currentYmd });
+          console.log('Chest found! Starting claim process...', { address, currentYmd, chainId });
+          
+          // Check network
+          if (chainId !== 10143) {
+            alert('Please switch to Monad Testnet (Chain ID: 10143) to claim chest!');
+            try {
+              await switchChain({ chainId: 10143 });
+            } catch (switchError) {
+              console.error('Failed to switch chain:', switchError);
+              alert('Failed to switch to Monad Testnet. Please switch manually.');
+            }
+            setGameState('start');
+            return;
+          }
           
           const message = `WE_CHEST:${address}:${currentYmd}`;
           console.log('Message to sign:', message);
           
-          const signature = await window.ethereum.request({
-            method: 'personal_sign',
-            params: [message, address],
+          // Use wagmi signMessageAsync instead of window.ethereum
+          const signature = await signMessageAsync({ 
+            message,
+            account: address 
           });
           
           console.log('Signature received:', signature);
@@ -88,7 +105,7 @@ export default function GameApp() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              address,
+              address: address.toLowerCase(), // Normalize address
               ymd: currentYmd,
               signature
             })
@@ -107,6 +124,10 @@ export default function GameApp() {
             }));
             setCanClaimToday(false);
             setGameState('chest-found');
+            
+            // Refresh leaderboard after successful claim
+            // The Leaderboard component will auto-refresh, but we can trigger it manually
+            window.dispatchEvent(new Event('leaderboard-refresh'));
           } else if (data.status === 'already_claimed') {
             alert('You have already claimed your daily chest today!');
             setCanClaimToday(false);
@@ -117,7 +138,11 @@ export default function GameApp() {
           }
         } catch (error) {
           console.error('Claim error:', error);
-          alert('Failed to claim chest. Please try again. Error: ' + error.message);
+          if (error.message.includes('User rejected')) {
+            alert('Signature rejected. Please try again and approve the signature.');
+          } else {
+            alert('Failed to claim chest. Please try again. Error: ' + error.message);
+          }
           setGameState('start');
         }
       }
@@ -132,6 +157,17 @@ export default function GameApp() {
   const startGame = () => {
     if (!isConnected) {
       alert('Please connect your wallet to start the game');
+      return;
+    }
+    
+    if (chainId !== 10143) {
+      alert('Please switch to Monad Testnet (Chain ID: 10143) to play!');
+      try {
+        switchChain({ chainId: 10143 });
+      } catch (switchError) {
+        console.error('Failed to switch chain:', switchError);
+        alert('Failed to switch to Monad Testnet. Please switch manually.');
+      }
       return;
     }
     
@@ -153,17 +189,28 @@ export default function GameApp() {
       return;
     }
 
+    if (chainId !== 10143) {
+      alert('Please switch to Monad Testnet (Chain ID: 10143) to claim chest!');
+      try {
+        await switchChain({ chainId: 10143 });
+      } catch (switchError) {
+        console.error('Failed to switch chain:', switchError);
+        alert('Failed to switch to Monad Testnet. Please switch manually.');
+      }
+      return;
+    }
+
     if (!canClaimToday) {
       alert('You have already claimed your daily chest today!');
       return;
     }
 
     try {
-      // Sign message
+      // Sign message using wagmi
       const message = `WE_CHEST:${address}:${currentYmd}`;
-      const signature = await window.ethereum.request({
-        method: 'personal_sign',
-        params: [message, address],
+      const signature = await signMessageAsync({ 
+        message,
+        account: address 
       });
 
       // Send claim request
@@ -171,7 +218,7 @@ export default function GameApp() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          address,
+          address: address.toLowerCase(), // Normalize address
           ymd: currentYmd,
           signature
         })
@@ -187,6 +234,9 @@ export default function GameApp() {
         }));
         setCanClaimToday(false);
         alert(`Chest claimed successfully! Tickets: ${data.tickets}`);
+        
+        // Refresh leaderboard after successful claim
+        window.dispatchEvent(new Event('leaderboard-refresh'));
       } else if (data.status === 'already_claimed') {
         alert('You have already claimed your daily chest today!');
         setCanClaimToday(false);
@@ -195,7 +245,11 @@ export default function GameApp() {
       }
     } catch (error) {
       console.error('Claim error:', error);
-      alert('Failed to claim chest. Please try again.');
+      if (error.message.includes('User rejected')) {
+        alert('Signature rejected. Please try again and approve the signature.');
+      } else {
+        alert('Failed to claim chest. Please try again.');
+      }
     }
   };
 
