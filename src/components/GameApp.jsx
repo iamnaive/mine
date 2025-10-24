@@ -116,8 +116,17 @@ export default function GameApp() {
     }
   }, [gameState, imagesLoaded]);
 
+  // Reset loading state when starting new game
   useEffect(() => {
-    if (!cvsRef.current || gameState !== 'playing') return;
+    if (gameState === 'loading') {
+      setImagesLoaded(false);
+      setLoadingProgress(0);
+    }
+  }, [gameState]);
+
+  useEffect(() => {
+    if (!cvsRef.current || gameState !== 'loading') return;
+    
     const engine = new GameEngine(cvsRef.current, {
       onRunEnd: async (runScore) => {
         // Game ended without finding chest - mark as played today
@@ -252,8 +261,10 @@ Issued At: ${issuedAt}`;
     });
     setGameEngine(engine);
     return () => {
-      engine.destroy();
-      setGameEngine(null);
+      if (engine) {
+        engine.destroy();
+        setGameEngine(null);
+      }
     };
   }, [address, isConnected, gameState]);
 

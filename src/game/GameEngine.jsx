@@ -42,10 +42,20 @@ export default class GameEngine {
     
     this.keys = {};
     this.mouse = { x: 0, y: 0, down: false };
+    this.gameLoopRunning = false;
     
     this.generateWorld();
     this.setupEvents();
-    this.gameLoop();
+    
+    // Only start game loop if we're in playing state
+    // For loading state, we just load images
+    if (this.onImagesLoaded) {
+      // We're in loading mode, don't start game loop yet
+      console.log('GameEngine created in loading mode');
+    } else {
+      // We're in playing mode, start game loop
+      this.gameLoop();
+    }
   }
   
   loadBlockImages() {
@@ -69,6 +79,8 @@ export default class GameEngine {
       if (loadedCount >= totalImages && this.onImagesLoaded) {
         console.log('All block images loaded!');
         this.onImagesLoaded();
+        // Start game loop after images are loaded
+        this.startGameLoop();
       }
     };
     
@@ -101,6 +113,13 @@ export default class GameEngine {
     };
     specialImg.src = '/images/b5.png';
     this.blockImages['special'] = specialImg;
+  }
+
+  startGameLoop() {
+    if (!this.gameLoopRunning) {
+      this.gameLoopRunning = true;
+      this.gameLoop();
+    }
   }
 
   generateWorld() {
