@@ -1,64 +1,112 @@
 import React from "react";
 import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { RainbowKitProvider, getDefaultConfig } from "@rainbow-me/rainbowkit";
+import { RainbowKitProvider, ConnectButton } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css";
-import { useAccount, useChainId, useSwitchChain } from "wagmi";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount, useChainId, useSwitchChain, useDisconnect } from "wagmi";
 import { config } from "./wagmi";
 import GameApp from "./components/GameApp";
 
 const queryClient = new QueryClient();
 
 function AppContent() {
-  const { isConnected } = useAccount();
+  const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
-
-  const wrongNet = isConnected && chainId !== 10143;
+  const { disconnect } = useDisconnect();
 
   return (
     <div className="container">
       <div className="header">
-        <h2>Woolly Eggs — Mine (Monad Testnet)</h2>
-        <div className="header-info">
-          {isConnected && (
-            <div className="game-status">
-              <div className="status-item">
-                <span className="status-label">Network:</span>
-                <span className="status-value">{chainId === 10143 ? 'Monad Testnet ✅' : `Chain ${chainId} ❌`}</span>
+        {/* Left side: Lives, Network, Chain */}
+        <div className="header-group">
+          <div className="header-chip header-chip-icon">
+            <span role="img" aria-label="heart">❤️</span> Lives: 0
+          </div>
+          {isConnected && chainId === 10143 && (
+            <>
+              <div className="header-chip">
+                Monad Testnet
               </div>
-              <div className="status-item">
-                <span className="status-label">Daily Game:</span>
-                <span className="status-value">Available ✅</span>
+              <div className="header-chip">
+                chain {chainId}
               </div>
-              <div className="status-item">
-                <span className="status-label">Tickets:</span>
-                <span className="status-value">0/3</span>
-              </div>
-              <div className="status-item">
-                <span className="status-label">Days Played:</span>
-                <span className="status-value">0/3</span>
-              </div>
-            </div>
+            </>
           )}
-          <ConnectButton />
+        </div>
+
+        {/* Right side: Address, Get Life, Disconnect, Muted Icon, Connect Button */}
+        <div className="header-group">
+          <ConnectButton.Custom>
+            {({
+              account,
+              chain,
+              openAccountModal,
+              openChainModal,
+              openConnectModal,
+              authenticationStatus,
+              mounted,
+            }) => {
+              const ready = mounted && authenticationStatus !== 'loading';
+              const connected =
+                ready &&
+                account &&
+                chain &&
+                (!authenticationStatus ||
+                  authenticationStatus === 'authenticated');
+
+              return (
+                <div
+                  {...(!ready && {
+                    'aria-hidden': true,
+                    'style': {
+                      opacity: 0,
+                      pointerEvents: 'none',
+                      userSelect: 'none',
+                    },
+                  })}
+                >
+                  {(() => {
+                    if (!connected) {
+                      return (
+                        <button onClick={openConnectModal} type="button" className="header-button connect-wallet-btn">
+                          Connect Wallet
+                        </button>
+                      );
+                    }
+
+                    // If connected but on unsupported chain
+                    if (chain.unsupported) {
+                      return (
+                        <button onClick={openChainModal} type="button" className="header-button wrong-network-btn">
+                          Wrong network
+                        </button>
+                      );
+                    }
+
+                    // If connected and on supported chain
+                    return (
+                      <>
+                        <div className="header-chip" onClick={openAccountModal}>
+                          {account.displayName}
+                          {account.displayBalance
+                            ? ` (${account.displayBalance})`
+                            : ''}
+                        </div>
+                        <button className="header-button">Get life</button>
+                        <button className="header-button" onClick={() => disconnect()}>Disconnect</button>
+                        <div className="header-chip header-chip-icon">
+                          <span role="img" aria-label="muted speaker">🔇</span>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              );
+            }}
+          </ConnectButton.Custom>
         </div>
       </div>
-
-      {wrongNet && (
-        <div className="card">
-          <b>Wrong network</b>
-          <div className="btn-row">
-            <button
-              onClick={() => switchChain({ chainId: 10143 })}
-              style={{ cursor: "pointer" }}
-            >
-              Switch to Monad Testnet
-            </button>
-          </div>
-        </div>
-      )}
 
       <div className="card">
         <GameApp />

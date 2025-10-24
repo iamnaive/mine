@@ -11,46 +11,77 @@ html, body, #root {
 .container {
   max-width: 980px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 0;
 }
 
 .header {
+  background: #1a1b26;
+  padding: 12px 20px;
   display: flex;
-  gap: 12px;
-  align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  align-items: center;
+  border-bottom: 1px solid #2c2d3a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  margin-bottom: 0;
 }
 
-.header-info {
+.header-group {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 10px;
 }
 
-.game-status {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-}
-
-.status-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.status-label {
-  font-size: 12px;
-  color: #7d8590;
-  font-weight: 500;
-}
-
-.status-value {
-  font-size: 14px;
+.header-chip {
+  background: #2c2d3a;
   color: #ffffff;
+  border-radius: 9999px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.header-chip:hover {
+  background: #3c3d4a;
+}
+
+.header-chip-icon {
+  padding: 8px;
+}
+
+.header-button {
+  background: #4a4b5c;
+  color: #ffffff;
+  border: none;
+  border-radius: 9999px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  white-space: nowrap;
+}
+
+.header-button:hover {
+  background: #5c5d70;
+}
+
+.header-button.connect-wallet-btn,
+.header-button.wrong-network-btn {
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 8px 16px;
   font-weight: 600;
+}
+
+.header-button.connect-wallet-btn:hover,
+.header-button.wrong-network-btn:hover {
+  background: linear-gradient(90deg, #5a6ee0 0%, #6a3ea0 100%);
 }
 
 .card {
@@ -58,6 +89,7 @@ html, body, #root {
   border: 1px solid #30363d;
   border-radius: 12px;
   padding: 20px;
+  margin: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
 }
 
