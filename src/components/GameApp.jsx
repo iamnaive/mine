@@ -33,21 +33,32 @@ export default function GameApp() {
     fetchCurrentDate();
   }, []);
 
-  // Check if user can claim today
+  // Check if user can claim today and load player stats
   useEffect(() => {
-    const checkClaimStatus = async () => {
+    const checkClaimStatusAndLoadStats = async () => {
       if (!address || !currentYmd) return;
       
       try {
-        const response = await fetch(`/api/claim?address=${address}&ymd=${currentYmd}`);
-        const data = await response.json();
-        setCanClaimToday(!data.claimed);
+        // Check claim status
+        const claimResponse = await fetch(`/api/claim?address=${address}&ymd=${currentYmd}`);
+        const claimData = await claimResponse.json();
+        setCanClaimToday(!claimData.claimed);
+        
+        // Load player stats
+        const playerResponse = await fetch(`/api/players?address=${address}`);
+        if (playerResponse.ok) {
+          const playerData = await playerResponse.json();
+          setStats({
+            tickets: playerData.tickets || 0,
+            totalClaims: playerData.total_claims || 0
+          });
+        }
       } catch (error) {
-        console.error('Failed to check claim status:', error);
+        console.error('Failed to check claim status or load stats:', error);
       }
     };
     
-    checkClaimStatus();
+    checkClaimStatusAndLoadStats();
   }, [address, currentYmd]);
 
   useEffect(() => {
@@ -58,13 +69,49 @@ export default function GameApp() {
         setGameState('start');
       },
       onChestFound: async (tickets = 0) => {
-        setGameState('chest-found');
-        // Update stats after chest found
-        setStats((s) => ({
-          ...s,
-          tickets: s.tickets + tickets,
-          totalClaims: s.totalClaims + 1
-        }));
+        // First, try to claim the chest through the API
+        try {
+          const message = `WE_CHEST:${address}:${currentYmd}`;
+          const signature = await window.ethereum.request({
+            method: 'personal_sign',
+            params: [message, address],
+          });
+
+          // Send claim request
+          const response = await fetch('/api/claim', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              address,
+              ymd: currentYmd,
+              signature
+            })
+          });
+
+          const data = await response.json();
+
+          if (data.success && data.status === 'claimed') {
+            // Update stats with server response
+            setStats(s => ({
+              ...s,
+              tickets: data.tickets,
+              totalClaims: s.totalClaims + 1
+            }));
+            setCanClaimToday(false);
+            setGameState('chest-found');
+          } else if (data.status === 'already_claimed') {
+            alert('You have already claimed your daily chest today!');
+            setCanClaimToday(false);
+            setGameState('start');
+          } else {
+            alert('Failed to claim chest: ' + (data.error || 'Unknown error'));
+            setGameState('start');
+          }
+        } catch (error) {
+          console.error('Claim error:', error);
+          alert('Failed to claim chest. Please try again.');
+          setGameState('start');
+        }
       }
     });
     setGameEngine(engine);
@@ -81,7 +128,7 @@ export default function GameApp() {
     }
     
     if (!canClaimToday) {
-      alert('You have already claimed your daily chest today!');
+      alert('You have already claimed your daily chest today! Come back tomorrow!');
       return;
     }
     
@@ -168,13 +215,17 @@ export default function GameApp() {
               <div className="claim-section">
                 <p>Daily Chest Available: {canClaimToday ? '✅ Yes' : '❌ No'}</p>
                 <p>Your Tickets: {stats.tickets}</p>
-                <button 
-                  className="claim-btn" 
-                  onClick={claimChest}
-                  disabled={!canClaimToday}
-                >
-                  {canClaimToday ? 'Claim Daily Chest' : 'Already Claimed Today'}
-                </button>
+                {canClaimToday && (
+                  <button 
+                    className="claim-btn" 
+                    onClick={claimChest}
+                  >
+                    Claim Daily Chest
+                  </button>
+                )}
+                {!canClaimToday && (
+                  <p>You have already claimed your daily chest today!</p>
+                )}
               </div>
             )}
             
@@ -205,6 +256,7 @@ export default function GameApp() {
               <p>You found and opened the chest!</p>
               <p>🎫 Tickets Earned: 1</p>
               <p>Total Tickets: {stats.tickets}</p>
+              <p>Total Claims: {stats.totalClaims}</p>
               <p>Great job, miner!</p>
               <button className="reset-btn" onClick={resetGame}>
                 Back to Menu
