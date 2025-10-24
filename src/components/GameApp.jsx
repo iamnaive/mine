@@ -7,78 +7,64 @@ export default function GameApp() {
   const cvsRef = useRef(null);
   const { address, isConnected } = useAccount();
 
-  const [gameState, setGameState] = useState('start'); // 'start', 'playing', 'chest-found', 'cooldown'
+  const [gameState, setGameState] = useState('start'); // 'start', 'playing', 'chest-found'
   const [stats, setStats] = useState({
-    runs: 0,
-    best: 0,
-    score: 0,
-    tickets: 0
+    tickets: 0,
+    totalClaims: 0
   });
-  const [lastPlayDate, setLastPlayDate] = useState(null);
-  const [cooldownTime, setCooldownTime] = useState(0);
   const [gameEngine, setGameEngine] = useState(null);
+  const [canClaimToday, setCanClaimToday] = useState(true);
+  const [currentYmd, setCurrentYmd] = useState(null);
 
-  // Load last play date from localStorage on mount
+  // Load current date from server
   useEffect(() => {
-    const savedLastPlay = localStorage.getItem('lastPlayDate');
-    if (savedLastPlay) {
-      setLastPlayDate(savedLastPlay);
-    }
+    const fetchCurrentDate = async () => {
+      try {
+        const response = await fetch('/api/date');
+        const data = await response.json();
+        if (data.success) {
+          setCurrentYmd(data.ymd);
+        }
+      } catch (error) {
+        console.error('Failed to fetch current date:', error);
+      }
+    };
+    
+    fetchCurrentDate();
   }, []);
 
-  // Update cooldown timer
+  // Check if user can claim today
   useEffect(() => {
-    if (gameState === 'cooldown' && cooldownTime > 0) {
-      const timer = setInterval(() => {
-        setCooldownTime(prev => {
-          if (prev <= 1000) {
-            setGameState('start');
-            return 0;
-          }
-          return prev - 1000;
-        });
-      }, 1000);
+    const checkClaimStatus = async () => {
+      if (!address || !currentYmd) return;
       
-      return () => clearInterval(timer);
-    }
-  }, [gameState, cooldownTime]);
+      try {
+        const response = await fetch(`/api/claim?address=${address}&ymd=${currentYmd}`);
+        const data = await response.json();
+        setCanClaimToday(!data.claimed);
+      } catch (error) {
+        console.error('Failed to check claim status:', error);
+      }
+    };
+    
+    checkClaimStatus();
+  }, [address, currentYmd]);
 
   useEffect(() => {
     if (!cvsRef.current || gameState !== 'playing') return;
     const engine = new GameEngine(cvsRef.current, {
       onRunEnd: async (runScore) => {
-        setStats((s) => ({
-          ...s,
-          runs: s.runs + 1,
-          best: Math.max(s.best, runScore),
-          score: s.score + runScore
-        }));
-        
-        // Set last play date to today
-        const today = new Date().toISOString();
-        setLastPlayDate(today);
-        localStorage.setItem('lastPlayDate', today);
-        
-        try {
-          await fetch("/api/players", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              address: address || "guest",
-              deltaScore: runScore,
-              deltaTickets: stats.tickets // Send current tickets count
-            })
-          });
-        } catch {
-          // ignore for now
-        }
+        // Game ended without finding chest
+        setGameState('start');
       },
-      onChestFound: (tickets = 0) => {
+      onChestFound: async (tickets = 0) => {
+        setGameState('chest-found');
+        // Update stats after chest found
         setStats((s) => ({
           ...s,
-          tickets: s.tickets + tickets
+          tickets: s.tickets + tickets,
+          totalClaims: s.totalClaims + 1
         }));
-        setGameState('chest-found');
       }
     });
     setGameEngine(engine);
@@ -88,30 +74,14 @@ export default function GameApp() {
     };
   }, [address, isConnected, gameState]);
 
-  const checkCooldown = () => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const lastPlay = lastPlayDate ? new Date(lastPlayDate) : null;
-    
-    if (lastPlay && lastPlay >= today) {
-      // Already played today
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const timeLeft = tomorrow.getTime() - now.getTime();
-      setCooldownTime(timeLeft);
-      return false;
-    }
-    return true;
-  };
-
   const startGame = () => {
     if (!isConnected) {
       alert('Please connect your wallet to start the game');
       return;
     }
     
-    if (!checkCooldown()) {
-      setGameState('cooldown');
+    if (!canClaimToday) {
+      alert('You have already claimed your daily chest today!');
       return;
     }
     
@@ -120,6 +90,58 @@ export default function GameApp() {
 
   const resetGame = () => {
     setGameState('start');
+  };
+
+  const claimChest = async () => {
+    if (!isConnected || !address || !currentYmd) {
+      alert('Please connect your wallet first');
+      return;
+    }
+
+    if (!canClaimToday) {
+      alert('You have already claimed your daily chest today!');
+      return;
+    }
+
+    try {
+      // Sign message
+      const message = `WE_CHEST:${address}:${currentYmd}`;
+      const signature = await window.ethereum.request({
+        method: 'personal_sign',
+        params: [message, address],
+      });
+
+      // Send claim request
+      const response = await fetch('/api/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address,
+          ymd: currentYmd,
+          signature
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.status === 'claimed') {
+        setStats(s => ({
+          ...s,
+          tickets: data.tickets,
+          totalClaims: s.totalClaims + 1
+        }));
+        setCanClaimToday(false);
+        alert(`Chest claimed successfully! Tickets: ${data.tickets}`);
+      } else if (data.status === 'already_claimed') {
+        alert('You have already claimed your daily chest today!');
+        setCanClaimToday(false);
+      } else {
+        alert('Failed to claim chest: ' + (data.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Claim error:', error);
+      alert('Failed to claim chest. Please try again.');
+    }
   };
 
   const handleMobileChestOpen = () => {
@@ -136,82 +158,73 @@ export default function GameApp() {
     }
   };
 
-  if (gameState === 'start') {
-    return (
-      <div className="start-screen">
-        <h2>🏗️ Crypto Mine Game</h2>
-        <p>Connect your wallet and start digging!</p>
-        <button className="start-btn" onClick={startGame}>
-          {isConnected ? 'Start Game' : 'Connect Wallet'}
-        </button>
-        <div className="game-info">
-          <h3>How to play:</h3>
-          <ul>
-            <li>WASD/arrows - movement</li>
-            <li>Space - jump</li>
-            <li>Click blocks - mining</li>
-            <li>E key - open chest (when nearby)</li>
-            <li>Find the chest in 3 minutes!</li>
-            <li>One game per day</li>
-          </ul>
-        </div>
-        <Leaderboard />
-      </div>
-    );
-  }
-
-  if (gameState === 'chest-found') {
-    return (
-      <div className="chest-found-screen">
-        <div className="chest-message">
-          <h1>🎁 Congratulations!</h1>
-          <p>You found and opened the chest!</p>
-          <p>Final Score: {stats.score}</p>
-          <p>🎫 Tickets Earned: {stats.tickets}</p>
-          <p>Great job, miner!</p>
-          <button className="reset-btn" onClick={resetGame}>
-            Play Again Tomorrow
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (gameState === 'cooldown') {
-    const hours = Math.floor(cooldownTime / (1000 * 60 * 60));
-    const minutes = Math.floor((cooldownTime % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((cooldownTime % (1000 * 60)) / 1000);
-    
-    return (
-      <div className="cooldown-screen">
-        <div className="cooldown-message">
-          <h1>⏰ Daily Cooldown</h1>
-          <p>You've already played today!</p>
-          <p>Next game available in:</p>
-          <div className="countdown">
-            {hours.toString().padStart(2, '0')}:{minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}
+      if (gameState === 'start') {
+        return (
+          <div className="start-screen">
+            <h2>🏗️ Crypto Mine Game</h2>
+            <p>Connect your wallet and start digging!</p>
+            
+            {isConnected && (
+              <div className="claim-section">
+                <p>Daily Chest Available: {canClaimToday ? '✅ Yes' : '❌ No'}</p>
+                <p>Your Tickets: {stats.tickets}</p>
+                <button 
+                  className="claim-btn" 
+                  onClick={claimChest}
+                  disabled={!canClaimToday}
+                >
+                  {canClaimToday ? 'Claim Daily Chest' : 'Already Claimed Today'}
+                </button>
+              </div>
+            )}
+            
+            <button className="start-btn" onClick={startGame}>
+              {isConnected ? 'Start Game' : 'Connect Wallet'}
+            </button>
+            <div className="game-info">
+              <h3>How to play:</h3>
+              <ul>
+                <li>WASD/arrows - movement</li>
+                <li>Space - jump</li>
+                <li>Click blocks - mining</li>
+                <li>E key - open chest (when nearby)</li>
+                <li>Find the chest in 3 minutes!</li>
+                <li>One chest per day</li>
+              </ul>
+            </div>
+            <Leaderboard />
           </div>
-          <button className="reset-btn" onClick={resetGame}>
-            Back to Menu
-          </button>
-        </div>
-      </div>
-    );
-  }
+        );
+      }
+
+      if (gameState === 'chest-found') {
+        return (
+          <div className="chest-found-screen">
+            <div className="chest-message">
+              <h1>🎁 Congratulations!</h1>
+              <p>You found and opened the chest!</p>
+              <p>🎫 Tickets Earned: 1</p>
+              <p>Total Tickets: {stats.tickets}</p>
+              <p>Great job, miner!</p>
+              <button className="reset-btn" onClick={resetGame}>
+                Back to Menu
+              </button>
+            </div>
+          </div>
+        );
+      }
 
   return (
     <>
       <div className="kv">
         <div>Address</div>
         <div>{isConnected ? address : "Not connected"}</div>
-        <div>Total runs</div>
-        <div>{stats.runs}</div>
-        <div>Best score</div>
-        <div>{stats.best}</div>
-        <div>Total score</div>
-        <div>{stats.score}</div>
+        <div>Total Claims</div>
+        <div>{stats.totalClaims}</div>
         <div>Tickets</div>
         <div>{stats.tickets}</div>
+        <div>Can Claim Today</div>
+        <div>{canClaimToday ? "Yes" : "No"}</div>
       </div>
 
       <div className="canvas-wrap">

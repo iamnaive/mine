@@ -16,12 +16,12 @@ export default async function handler(req, res) {
   try {
     await ensureTableExists();
 
-    if (req.method === 'POST') {
-      const { address, deltaScore = 0, deltaTickets = 0 } = req.body;
-      
-      if (!address) {
-        return res.status(400).json({ error: 'Address is required' });
-      }
+        if (req.method === 'POST') {
+          const { address, deltaTickets = 0 } = req.body;
+          
+          if (!address) {
+            return res.status(400).json({ error: 'Address is required' });
+          }
 
           // Get or create player
           let result = await pool.query(
@@ -32,33 +32,31 @@ export default async function handler(req, res) {
           if (result.rows.length === 0) {
             // Create new player
             result = await pool.query(
-              `INSERT INTO players (address, score, tickets, total_runs, best_score)
-               VALUES ($1, $2, $3, 1, $2)
+              `INSERT INTO players (address, tickets, total_claims)
+               VALUES ($1, $2, 1)
                RETURNING *`,
-              [address, deltaScore, deltaTickets]
+              [address, deltaTickets]
             );
           } else {
             // Update existing player
             const player = result.rows[0];
-            const newScore = player.score + deltaScore;
             const newTickets = player.tickets + deltaTickets;
-            const newBest = Math.max(player.best_score, deltaScore);
             
             result = await pool.query(
               `UPDATE players 
-               SET score = $2, tickets = $3, total_runs = total_runs + 1, best_score = $4
+               SET tickets = $2, total_claims = total_claims + 1
                WHERE address = $1
                RETURNING *`,
-              [address, newScore, newTickets, newBest]
+              [address, newTickets]
             );
           }
 
-      return res.json(result.rows[0]);
-    }
+          return res.json(result.rows[0]);
+        }
 
-    if (req.method === 'GET') {
-      const { address } = req.query;
-      
+        if (req.method === 'GET') {
+          const { address } = req.query;
+          
           if (address) {
             const result = await pool.query(
               'SELECT * FROM players WHERE address = $1',
@@ -71,13 +69,13 @@ export default async function handler(req, res) {
             
             return res.json(result.rows[0]);
           } else {
-            // Get leaderboard
+            // Get all players (for debugging)
             const result = await pool.query(
-              'SELECT address, score, tickets, best_score, total_runs FROM players ORDER BY score DESC LIMIT 10'
+              'SELECT address, tickets, total_claims, first_claim_date, last_claim_date FROM players ORDER BY tickets DESC LIMIT 50'
             );
             return res.json(result.rows);
           }
-    }
+        }
 
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (error) {
@@ -91,16 +89,16 @@ async function ensureTableExists() {
     CREATE TABLE IF NOT EXISTS players (
       id SERIAL PRIMARY KEY,
       address VARCHAR(42) UNIQUE NOT NULL,
-      score INTEGER DEFAULT 0,
       tickets INTEGER DEFAULT 0,
-      total_runs INTEGER DEFAULT 0,
-      best_score INTEGER DEFAULT 0,
+      total_claims INTEGER DEFAULT 0,
+      first_claim_date DATE,
+      last_claim_date DATE,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     
     CREATE INDEX IF NOT EXISTS idx_players_address ON players(address);
-    CREATE INDEX IF NOT EXISTS idx_players_score ON players(score DESC);
+    CREATE INDEX IF NOT EXISTS idx_players_tickets ON players(tickets DESC);
   `;
   
   await pool.query(createTableQuery);

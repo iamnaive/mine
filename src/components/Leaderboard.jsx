@@ -4,7 +4,7 @@ export default function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [type, setType] = useState('score');
+  const [type, setType] = useState('tickets');
 
   useEffect(() => {
     fetchLeaderboard();
@@ -39,11 +39,10 @@ export default function Leaderboard() {
 
   const getTypeLabel = (type) => {
     switch (type) {
-      case 'score': return 'Total Score';
       case 'tickets': return 'Tickets';
-      case 'best': return 'Best Score';
-      case 'runs': return 'Total Runs';
-      default: return 'Score';
+      case 'claims': return 'Total Claims';
+      case 'recent': return 'Recent Claims';
+      default: return 'Tickets';
     }
   };
 
@@ -62,28 +61,22 @@ export default function Leaderboard() {
       
       <div className="leaderboard-tabs">
         <button 
-          className={type === 'score' ? 'active' : ''} 
-          onClick={() => setType('score')}
-        >
-          Total Score
-        </button>
-        <button 
           className={type === 'tickets' ? 'active' : ''} 
           onClick={() => setType('tickets')}
         >
           Tickets
         </button>
         <button 
-          className={type === 'best' ? 'active' : ''} 
-          onClick={() => setType('best')}
+          className={type === 'claims' ? 'active' : ''} 
+          onClick={() => setType('claims')}
         >
-          Best Score
+          Total Claims
         </button>
         <button 
-          className={type === 'runs' ? 'active' : ''} 
-          onClick={() => setType('runs')}
+          className={type === 'recent' ? 'active' : ''} 
+          onClick={() => setType('recent')}
         >
-          Total Runs
+          Recent
         </button>
       </div>
 
@@ -94,12 +87,12 @@ export default function Leaderboard() {
             <span className="stat-value">{stats.total_players}</span>
           </div>
           <div className="stat">
-            <span className="stat-label">Total Score:</span>
-            <span className="stat-value">{stats.total_score?.toLocaleString() || 0}</span>
-          </div>
-          <div className="stat">
             <span className="stat-label">Total Tickets:</span>
             <span className="stat-value">{stats.total_tickets || 0}</span>
+          </div>
+          <div className="stat">
+            <span className="stat-label">Total Claims:</span>
+            <span className="stat-value">{stats.total_claims || 0}</span>
           </div>
         </div>
       )}
@@ -114,17 +107,16 @@ export default function Leaderboard() {
               <div className="player-info">
                 <div className="address">{formatAddress(player.address)}</div>
                 <div className="player-stats">
-                  <span>Score: {player.score?.toLocaleString() || 0}</span>
                   <span>Tickets: {player.tickets || 0}</span>
-                  <span>Best: {player.best_score?.toLocaleString() || 0}</span>
-                  <span>Runs: {player.total_runs || 0}</span>
+                  <span>Claims: {player.total_claims || 0}</span>
+                  <span>First: {player.first_claim_date || 'N/A'}</span>
+                  <span>Last: {player.last_claim_date || 'N/A'}</span>
                 </div>
               </div>
               <div className="main-value">
-                {type === 'score' && (player.score?.toLocaleString() || 0)}
                 {type === 'tickets' && (player.tickets || 0)}
-                {type === 'best' && (player.best_score?.toLocaleString() || 0)}
-                {type === 'runs' && (player.total_runs || 0)}
+                {type === 'claims' && (player.total_claims || 0)}
+                {type === 'recent' && (player.last_claim_date || 'N/A')}
               </div>
             </div>
           ))

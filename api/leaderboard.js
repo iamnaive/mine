@@ -17,24 +17,22 @@ export default async function handler(req, res) {
     await ensureTableExists();
 
     if (req.method === 'GET') {
-      const { limit = 10, type = 'score' } = req.query;
+      const { limit = 10, type = 'tickets' } = req.query;
       
-      let orderBy = 'score DESC';
-      if (type === 'tickets') {
-        orderBy = 'tickets DESC, score DESC';
-      } else if (type === 'best') {
-        orderBy = 'best_score DESC, score DESC';
-      } else if (type === 'runs') {
-        orderBy = 'total_runs DESC, score DESC';
+      let orderBy = 'tickets DESC, total_claims DESC';
+      if (type === 'claims') {
+        orderBy = 'total_claims DESC, tickets DESC';
+      } else if (type === 'recent') {
+        orderBy = 'last_claim_date DESC, tickets DESC';
       }
 
       const result = await pool.query(`
         SELECT 
           address,
-          score,
           tickets,
-          best_score,
-          total_runs,
+          total_claims,
+          first_claim_date,
+          last_claim_date,
           created_at,
           updated_at
         FROM players 
@@ -46,11 +44,10 @@ export default async function handler(req, res) {
       const statsResult = await pool.query(`
         SELECT 
           COUNT(*) as total_players,
-          SUM(score) as total_score,
           SUM(tickets) as total_tickets,
-          AVG(score) as avg_score,
-          MAX(score) as max_score,
-          MAX(best_score) as max_best_score
+          SUM(total_claims) as total_claims,
+          AVG(tickets) as avg_tickets,
+          MAX(tickets) as max_tickets
         FROM players
       `);
 
@@ -78,18 +75,17 @@ async function ensureTableExists() {
     CREATE TABLE IF NOT EXISTS players (
       id SERIAL PRIMARY KEY,
       address VARCHAR(42) UNIQUE NOT NULL,
-      score INTEGER DEFAULT 0,
       tickets INTEGER DEFAULT 0,
-      total_runs INTEGER DEFAULT 0,
-      best_score INTEGER DEFAULT 0,
+      total_claims INTEGER DEFAULT 0,
+      first_claim_date DATE,
+      last_claim_date DATE,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     
     CREATE INDEX IF NOT EXISTS idx_players_address ON players(address);
-    CREATE INDEX IF NOT EXISTS idx_players_score ON players(score DESC);
     CREATE INDEX IF NOT EXISTS idx_players_tickets ON players(tickets DESC);
-    CREATE INDEX IF NOT EXISTS idx_players_best_score ON players(best_score DESC);
+    CREATE INDEX IF NOT EXISTS idx_players_claims ON players(total_claims DESC);
   `;
   
   await pool.query(createTableQuery);
