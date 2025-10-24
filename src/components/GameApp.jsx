@@ -413,13 +413,14 @@ export default function GameApp() {
       <div className="canvas-wrap">
         <canvas 
           ref={cvsRef} 
-          width={1200} 
-          height={800}
+          width={1600} 
+          height={1200}
           style={{ 
-            width: '1200px', 
-            height: '800px',
+            width: '1600px', 
+            height: '1200px',
             maxWidth: '100%',
-            maxHeight: 'calc(100vh - 200px)'
+            maxHeight: 'calc(100vh - 200px)',
+            imageRendering: 'pixelated'
           }}
         />
         

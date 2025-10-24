@@ -8,9 +8,9 @@ export default class GameEngine {
     this.width = canvas.width;
     this.height = canvas.height;
     
-    // Block size (2-2.5x larger than player) - doubled scale
-    this.blockSize = 80;
-    this.playerSize = 32;
+    // Block size (2-2.5x larger than player) - increased for larger canvas
+    this.blockSize = 100;
+    this.playerSize = 40;
     
     // Block grid
     this.gridWidth = Math.ceil(this.width / this.blockSize);
@@ -257,14 +257,14 @@ export default class GameEngine {
     
     // Jumping (single press only) - fixed height jump
     if ((this.keys['Space'] || this.keys['KeyW'] || this.keys['ArrowUp']) && this.player.onGround && !this.player.jumping) {
-      // Fixed jump height: 2.2 blocks (88 pixels with 40px blocks)
+      // Fixed jump height: 2.2 blocks (220 pixels with 100px blocks)
       // Calculate velocity needed to reach 2.2 blocks height
       // Using physics: v = sqrt(2 * g * h) where h = 2.2 * blockSize
-      const jumpHeight = 2.2 * this.blockSize; // 88 pixels
-      const gravity = 0.25;
+      const jumpHeight = 2.2 * this.blockSize; // 220 pixels
+      const gravity = 0.3;
       const jumpVelocity = Math.sqrt(2 * gravity * jumpHeight);
       
-      this.player.vy = -jumpVelocity; // Approximately -6.6 for 2.2 block jump
+      this.player.vy = -jumpVelocity; // Approximately -11.5 for 2.2 block jump
       this.player.onGround = false;
       this.player.jumping = true;
     }
@@ -288,7 +288,7 @@ export default class GameEngine {
     }
     
     // Gravity (even slower for smoother jump)
-    this.player.vy += 0.25;
+    this.player.vy += 0.3;
     
     // Save old position for collisions
     const oldX = this.player.x;
