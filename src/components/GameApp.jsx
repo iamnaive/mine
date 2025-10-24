@@ -1,14 +1,32 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useAccount, useSignMessage, useChainId, useSwitchChain } from "wagmi";
+import { useAccount, useChainId, useSwitchChain } from "wagmi";
+import { signMessage } from "@wagmi/core";
+import { config } from "../wagmi";
 import GameEngine from "../game/GameEngine";
 import Leaderboard from "./Leaderboard";
+
+// Helper function for signing with wagmi or fallback
+async function signWithWagmiOrFallback(address, message) {
+  try {
+    // wagmi v2 requires config + account
+    const sig = await signMessage(config, { account: address, message });
+    return sig;
+  } catch (e) {
+    console.warn("[MINE] wagmi signMessage failed, trying personal_sign fallback", e);
+    // Fallback to window.ethereum if available
+    const eth = globalThis.ethereum;
+    if (!eth) throw new Error("No ethereum provider for personal_sign");
+    // important: personal_sign params order = [message, address]
+    const sig = await eth.request({ method: "personal_sign", params: [message, address] });
+    return sig;
+  }
+}
 
 export default function GameApp() {
   const cvsRef = useRef(null);
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
-  const { signMessageAsync } = useSignMessage();
 
   const [gameState, setGameState] = useState('start'); // 'start', 'playing', 'chest-found'
   const [stats, setStats] = useState({
@@ -104,11 +122,8 @@ export default function GameApp() {
           const message = `WE_CHEST:${address}:${currentYmd}`;
           console.log('Message to sign:', message);
           
-          // Use wagmi signMessageAsync instead of window.ethereum
-          const signature = await signMessageAsync({ 
-            message,
-            account: address 
-          });
+          // Use wagmi signMessage with fallback
+          const signature = await signWithWagmiOrFallback(address, message);
           
           console.log('Signature received:', signature);
 
@@ -240,12 +255,9 @@ export default function GameApp() {
     }
 
     try {
-      // Sign message using wagmi
+      // Sign message using wagmi with fallback
       const message = `WE_CHEST:${address}:${currentYmd}`;
-      const signature = await signMessageAsync({ 
-        message,
-        account: address 
-      });
+      const signature = await signWithWagmiOrFallback(address, message);
 
       // Send claim request
       const response = await fetch('/api/claim', {

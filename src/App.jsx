@@ -1,33 +1,10 @@
 import React from "react";
-import { WagmiProvider, createConfig, http } from "wagmi";
-import { mainnet, sepolia } from "wagmi/chains";
+import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { RainbowKitProvider, getDefaultConfig } from "@rainbow-me/rainbowkit";
-import "@rainbow-me/rainbowkit/styles.css";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { config } from "./wagmi";
 import GameApp from "./components/GameApp";
-
-// Define Monad Testnet
-const monadTestnet = {
-  id: 10143,
-  name: "Monad Testnet",
-  nativeCurrency: { name: "Monad", symbol: "MON", decimals: 18 },
-  rpcUrls: {
-    default: { http: ["https://testnet-rpc.monad.xyz"] },
-  },
-  blockExplorers: {
-    default: { name: "Monad Explorer", url: "http://testnet.monadexplorer.com" },
-  },
-  testnet: true,
-};
-
-const config = getDefaultConfig({
-  appName: "Woolly Eggs — Mine (Monad Testnet)",
-  projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || "your-project-id",
-  chains: [monadTestnet],
-  ssr: false,
-});
 
 const queryClient = new QueryClient();
 
