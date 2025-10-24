@@ -57,6 +57,10 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
+      console.log('=== CLAIM POST REQUEST START ===');
+      console.log('Request body:', req.body);
+      console.log('Request headers:', req.headers);
+      
       const { address, ymd, signature } = req.body;
       
       console.log('Claim POST request received:', {
@@ -236,7 +240,11 @@ export default async function handler(req, res) {
 
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (error) {
-    console.error('Claim API Error:', error);
+    console.error('=== CLAIM API ERROR ===');
+    console.error('Error:', error);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Error name:', error.name);
     console.error('Error details:', {
       message: error.message,
       stack: error.stack,
