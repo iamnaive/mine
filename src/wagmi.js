@@ -11,6 +11,9 @@ const RPC_URL = String(import.meta.env.VITE_RPC_URL ?? "https://testnet-rpc.mona
 const APP_NAME = String(import.meta.env.VITE_APP_NAME ?? "Crypto Mine Game");
 const WC_PROJECT_ID = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
 
+// Log WalletConnect Project ID for debugging
+console.log('WalletConnect Project ID:', WC_PROJECT_ID ? 'Set' : 'Not set');
+
 // --- Chain ---
 export const MONAD = defineChain({
   id: CHAIN_ID,
@@ -73,7 +76,7 @@ const connectors = [
           metadata: {
             name: APP_NAME,
             description: "Crypto Mine Game",
-            url: "https://example.invalid",
+            url: window.location.origin,
             icons: ["https://fav.farm/⛏️"],
           },
           showQrModal: true,

@@ -403,9 +403,14 @@ export default function GameApp() {
       <div className="canvas-wrap">
         <canvas 
           ref={cvsRef} 
-          width={window.innerWidth} 
-          height={window.innerHeight - 100}
-          style={{ width: '100vw', height: 'calc(100vh - 100px)' }}
+          width={1200} 
+          height={800}
+          style={{ 
+            width: '1200px', 
+            height: '800px',
+            maxWidth: '100%',
+            maxHeight: 'calc(100vh - 200px)'
+          }}
         />
         
         {/* Mobile Controls */}
