@@ -322,21 +322,29 @@ export default function GameApp() {
             {isConnected && (
               <div className="claim-section">
                 <p>Network: {chainId === 10143 ? 'Monad Testnet ✅' : `Chain ${chainId} ❌`}</p>
-                <p>Daily Chest Available: {canClaimToday ? '✅ Yes' : '❌ No'}</p>
-                <p>Your Tickets: {stats.tickets}</p>
-                {canClaimToday && chainId === 10143 && (
+                <p>Daily Game Available: {canClaimToday ? '✅ Yes' : '❌ No'}</p>
+                <p>Your Tickets: {stats.tickets}/3</p>
+                <p>Days Played: {stats.totalClaims}/3</p>
+                {stats.tickets >= 3 && (
+                  <div className="lottery-section">
+                    <h3>🎰 Lottery is Open!</h3>
+                    <p>You can now use your tickets to win prizes!</p>
+                    <button className="lottery-btn">Open Lottery</button>
+                  </div>
+                )}
+                {canClaimToday && chainId === 10143 && stats.tickets < 3 && (
                   <button 
                     className="claim-btn" 
                     onClick={claimChest}
                   >
-                    Claim Daily Chest
+                    Play Today's Game
                   </button>
                 )}
                 {canClaimToday && chainId !== 10143 && (
-                  <p style={{color: 'orange'}}>⚠️ Please switch to Monad Testnet to claim chest</p>
+                  <p style={{color: 'orange'}}>⚠️ Please switch to Monad Testnet to play</p>
                 )}
-                {!canClaimToday && (
-                  <p>You have already claimed your daily chest today!</p>
+                {!canClaimToday && stats.tickets < 3 && (
+                  <p>You have already played today! Come back tomorrow!</p>
                 )}
               </div>
             )}
@@ -359,7 +367,9 @@ export default function GameApp() {
                 <li>Click blocks - mining</li>
                 <li>E key - open chest (when nearby)</li>
                 <li>Find the chest in 3 minutes!</li>
-                <li>One chest per day</li>
+                <li>One game per day for 3 days</li>
+                <li>Earn 1 ticket per day (max 3 tickets)</li>
+                <li>After 3 days: lottery opens!</li>
               </ul>
             </div>
             <Leaderboard />
