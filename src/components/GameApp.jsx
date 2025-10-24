@@ -166,7 +166,7 @@ export default function GameApp() {
     };
   }, [address, isConnected, gameState]);
 
-  const startGame = () => {
+  const startGame = async () => {
     if (!isConnected) {
       alert('Please connect your wallet to start the game');
       return;
