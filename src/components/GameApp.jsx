@@ -114,10 +114,11 @@ export default function GameApp() {
       <div className="chest-found-screen">
         <div className="chest-message">
           <h1>🎁 Congratulations!</h1>
-          <p>You found the chest!</p>
-          <p>Score: {stats.score}</p>
+          <p>You found and opened the chest!</p>
+          <p>Final Score: {stats.score}</p>
+          <p>Great job, miner!</p>
           <button className="reset-btn" onClick={resetGame}>
-            Play Again
+            Play Again Tomorrow
           </button>
         </div>
       </div>

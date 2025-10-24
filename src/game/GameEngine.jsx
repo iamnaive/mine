@@ -32,6 +32,7 @@ export default class GameEngine {
     this.score = 0;
     this.timeLeft = 180; // 3 minutes
     this.chestFound = false;
+    this.chest = null; // Chest object with position and state
     
     this.keys = {};
     this.mouse = { x: 0, y: 0, down: false };
@@ -113,6 +114,22 @@ export default class GameEngine {
     
     this.canvas.addEventListener('mousedown', (e) => {
       this.mouse.down = true;
+      
+      // Check if clicking on chest first
+      if (this.chest && !this.chest.opened) {
+        const chestLeft = this.chest.x - this.chest.size / 2;
+        const chestRight = this.chest.x + this.chest.size / 2;
+        const chestTop = this.chest.y - this.chest.size / 2;
+        const chestBottom = this.chest.y + this.chest.size / 2;
+        
+        if (this.mouse.x >= chestLeft && this.mouse.x <= chestRight &&
+            this.mouse.y >= chestTop && this.mouse.y <= chestBottom) {
+          this.openChest();
+          e.preventDefault();
+          return;
+        }
+      }
+      
       this.handleMining();
       e.preventDefault(); // Prevent text selection
     });
@@ -152,14 +169,16 @@ export default class GameEngine {
       this.score += points;
       
       // Check for chest (only from 2nd to 3rd minute)
-      if (this.timeLeft <= 120 && this.timeLeft > 0 && !this.chestFound) {
+      if (this.timeLeft <= 120 && this.timeLeft > 0 && !this.chest && !this.chestFound) {
         const chestChance = this.getChestChance();
         if (Math.random() < chestChance) {
-          this.chestFound = true;
-          this.showChestFound();
-          if (this.onChestFound) {
-            this.onChestFound();
-          }
+          // Create chest at the mined block position
+          this.chest = {
+            x: gridX * this.blockSize + this.blockSize / 2,
+            y: gridY * this.blockSize + this.blockSize / 2,
+            size: this.blockSize * 0.8,
+            opened: false
+          };
         }
       }
       
@@ -187,16 +206,33 @@ export default class GameEngine {
   }
   
   getChestChance() {
-    // С 2 по 3 минуту шанс растет от 0% до 100%
+    // Progressive chest chance from 0% to 100% over the last 2 minutes
     const timeInChestPeriod = Math.max(0, 120 - this.timeLeft);
-    const maxChestTime = 120; // 2 минуты
+    const maxChestTime = 120; // 2 minutes
     return Math.min(1, timeInChestPeriod / maxChestTime);
   }
-  
-  showChestFound() {
-    // Показываем уведомление о найденном сундуке
-    console.log('🎁 Сундук найден!');
-    // TODO: Добавить UI уведомление
+
+  openChest() {
+    if (this.chest && !this.chest.opened) {
+      this.chest.opened = true;
+      this.chestFound = true;
+      
+      // Create celebration particles
+      for (let i = 0; i < 20; i++) {
+        this.particles.push({
+          x: this.chest.x,
+          y: this.chest.y,
+          vx: (Math.random() - 0.5) * 8,
+          vy: (Math.random() - 0.5) * 8,
+          life: 60,
+          color: '#fbbf24'
+        });
+      }
+      
+      if (this.onChestFound) {
+        this.onChestFound();
+      }
+    }
   }
   
   createParticles(gridX, gridY, type) {
@@ -232,9 +268,9 @@ export default class GameEngine {
     if (this.keys['KeyA'] || this.keys['ArrowLeft']) this.player.vx = -2;
     if (this.keys['KeyD'] || this.keys['ArrowRight']) this.player.vx = 2;
     
-    // Jumping (single press only)
+    // Jumping (single press only) - increased jump power
     if ((this.keys['Space'] || this.keys['KeyW'] || this.keys['ArrowUp']) && this.player.onGround && !this.player.jumping) {
-      this.player.vy = -10;
+      this.player.vy = -18; // Increased from -10 to -18 (1.8x stronger)
       this.player.onGround = false;
       this.player.jumping = true;
     }
@@ -277,6 +313,7 @@ export default class GameEngine {
       this.timeLeft = 180;
       this.score = 0;
       this.chestFound = false;
+      this.chest = null; // Reset chest
       this.generateWorld(); // Regenerate world
       this.particles = [];
     }
@@ -369,6 +406,36 @@ export default class GameEngine {
           this.ctx.fillRect(blockX + 2, blockY + 2, 2, this.blockSize - 4);
         }
       }
+    }
+    
+    // Draw chest if exists
+    if (this.chest) {
+      const chestX = this.chest.x - this.chest.size / 2;
+      const chestY = this.chest.y - this.chest.size / 2;
+      
+      // Chest body
+      this.ctx.fillStyle = this.chest.opened ? '#8b5cf6' : '#fbbf24';
+      this.ctx.fillRect(chestX, chestY, this.chest.size, this.chest.size);
+      
+      // Chest border
+      this.ctx.strokeStyle = this.chest.opened ? '#a78bfa' : '#f59e0b';
+      this.ctx.lineWidth = 3;
+      this.ctx.strokeRect(chestX, chestY, this.chest.size, this.chest.size);
+      
+      // Chest details
+      this.ctx.fillStyle = this.chest.opened ? '#a78bfa' : '#f59e0b';
+      this.ctx.fillRect(chestX + 5, chestY + 5, this.chest.size - 10, 8);
+      this.ctx.fillRect(chestX + 5, chestY + this.chest.size - 13, this.chest.size - 10, 8);
+      
+      // Chest lock
+      this.ctx.fillStyle = '#374151';
+      this.ctx.fillRect(chestX + this.chest.size/2 - 4, chestY + this.chest.size/2 - 4, 8, 8);
+      
+      // Glow effect
+      this.ctx.shadowColor = this.chest.opened ? '#8b5cf6' : '#fbbf24';
+      this.ctx.shadowBlur = 20;
+      this.ctx.fillRect(chestX, chestY, this.chest.size, this.chest.size);
+      this.ctx.shadowBlur = 0;
     }
     
     // Draw particles
