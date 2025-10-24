@@ -146,10 +146,14 @@ export default function GameApp() {
           }
           
           // First, get nonce from server
+          console.log('Requesting nonce for address:', address);
           const nonceResponse = await fetch(`/api/auth/nonce?address=${address}`);
+          console.log('Nonce response status:', nonceResponse.status);
           const nonceData = await nonceResponse.json();
+          console.log('Nonce data:', nonceData);
           
           if (!nonceData.success) {
+            console.error('Nonce request failed:', nonceData);
             alert('Failed to get authentication nonce. Please try again.');
             setGameState('start');
             return;
@@ -177,15 +181,22 @@ Issued At: ${issuedAt}`;
           console.log('Signature received:', signature);
 
           // Send claim request with nonce
+          const claimData = {
+            address: address, // Keep original address for signature verification
+            ymd: currentYmd,
+            signature,
+            nonce
+          };
+          console.log('Sending claim request with data:', {
+            ...claimData,
+            signature: signature.substring(0, 20) + '...',
+            nonce: nonce.substring(0, 10) + '...'
+          });
+          
           const response = await fetch('/api/claim', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              address: address, // Keep original address for signature verification
-              ymd: currentYmd,
-              signature,
-              nonce
-            })
+            body: JSON.stringify(claimData)
           });
 
           console.log('API response status:', response.status);

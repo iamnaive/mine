@@ -17,7 +17,7 @@ export default async function handler(req, res) {
 
   // Restrict CORS to specific domains
   const allowedOrigins = [
-    'https://your-app.vercel.app',
+    'https://mine-kappa-vert.vercel.app',
     'http://localhost:3000',
     'http://localhost:5173'
   ];

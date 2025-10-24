@@ -12,6 +12,10 @@ export default class GameEngine {
     this.blockSize = 100;
     this.playerSize = 40;
     
+    // Load block images
+    this.blockImages = {};
+    this.loadBlockImages();
+    
     // Block grid
     this.gridWidth = Math.ceil(this.width / this.blockSize);
     this.gridHeight = Math.ceil(this.height / this.blockSize);
@@ -42,6 +46,31 @@ export default class GameEngine {
     this.gameLoop();
   }
   
+  loadBlockImages() {
+    const blockTypes = ['stone', 'iron', 'gold', 'diamond'];
+    const imageFiles = ['b1.png', 'b2.png', 'b3.png', 'b4.png'];
+    
+    blockTypes.forEach((type, index) => {
+      const img = new Image();
+      img.onload = () => {
+        console.log(`Loaded block image: ${type} (${imageFiles[index]})`);
+      };
+      img.onerror = () => {
+        console.error(`Failed to load block image: ${imageFiles[index]}`);
+      };
+      img.src = `/images/${imageFiles[index]}`;
+      this.blockImages[type] = img;
+    });
+    
+    // Use b5.png for special blocks or as fallback
+    const specialImg = new Image();
+    specialImg.onload = () => {
+      console.log('Loaded special block image: b5.png');
+    };
+    specialImg.src = '/images/b5.png';
+    this.blockImages['special'] = specialImg;
+  }
+
   generateWorld() {
     // Fill the entire grid with blocks
     this.blocks = [];
@@ -429,19 +458,25 @@ export default class GameEngine {
           const blockX = x * this.blockSize;
           const blockY = y * this.blockSize;
           
-          // Block color based on type
-          this.ctx.fillStyle = this.getBlockColor(block.type);
-          this.ctx.fillRect(blockX, blockY, this.blockSize, this.blockSize);
-          
-          // Block border
-          this.ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-          this.ctx.lineWidth = 1;
-          this.ctx.strokeRect(blockX, blockY, this.blockSize, this.blockSize);
-          
-          // Block texture (простая текстура)
-          this.ctx.fillStyle = 'rgba(255,255,255,0.1)';
-          this.ctx.fillRect(blockX + 2, blockY + 2, this.blockSize - 4, 2);
-          this.ctx.fillRect(blockX + 2, blockY + 2, 2, this.blockSize - 4);
+          // Draw block image if available, otherwise fallback to color
+          const blockImage = this.blockImages[block.type];
+          if (blockImage && blockImage.complete && blockImage.naturalWidth > 0) {
+            this.ctx.drawImage(blockImage, blockX, blockY, this.blockSize, this.blockSize);
+          } else {
+            // Fallback to colored rectangle
+            this.ctx.fillStyle = this.getBlockColor(block.type);
+            this.ctx.fillRect(blockX, blockY, this.blockSize, this.blockSize);
+            
+            // Block border
+            this.ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+            this.ctx.lineWidth = 1;
+            this.ctx.strokeRect(blockX, blockY, this.blockSize, this.blockSize);
+            
+            // Block texture (простая текстура)
+            this.ctx.fillStyle = 'rgba(255,255,255,0.1)';
+            this.ctx.fillRect(blockX + 2, blockY + 2, this.blockSize - 4, 2);
+            this.ctx.fillRect(blockX + 2, blockY + 2, 2, this.blockSize - 4);
+          }
         }
       }
     }
