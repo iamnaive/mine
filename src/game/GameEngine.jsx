@@ -146,9 +146,6 @@ export default class GameEngine {
       
       // Создаем частицы
       this.createParticles(gridX, gridY, block.type);
-      
-      // Проверяем, нужно ли уронить игрока
-      this.checkPlayerFall();
     }
   }
   
@@ -209,60 +206,36 @@ export default class GameEngine {
     }
   }
   
-  checkPlayerFall() {
-    const playerGridX = Math.floor(this.player.x / this.blockSize);
-    const playerGridY = Math.floor(this.player.y / this.blockSize);
-    
-    // Проверяем, есть ли блок под игроком
-    if (playerGridY + 1 < this.gridHeight && 
-        !this.blocks[playerGridY + 1][playerGridX].mined) {
-      // Игрок падает вниз
-      this.player.gridY++;
-      this.player.y = this.player.gridY * this.blockSize + this.blockSize / 2;
-      this.player.vy = 0;
-    }
-  }
   
   update() {
     // Player movement
     this.player.vx = 0;
-    if (this.keys['KeyA'] || this.keys['ArrowLeft']) this.player.vx = -3;
-    if (this.keys['KeyD'] || this.keys['ArrowRight']) this.player.vx = 3;
+    if (this.keys['KeyA'] || this.keys['ArrowLeft']) this.player.vx = -4;
+    if (this.keys['KeyD'] || this.keys['ArrowRight']) this.player.vx = 4;
     
-    // Jumping (только если есть блок под ногами и нет блока над головой)
+    // Jumping
     if ((this.keys['Space'] || this.keys['KeyW'] || this.keys['ArrowUp']) && this.player.onGround) {
-      const playerGridX = Math.floor(this.player.x / this.blockSize);
-      const playerGridY = Math.floor(this.player.y / this.blockSize);
-      
-      // Проверяем, есть ли блок над игроком
-      let canJump = true;
-      if (playerGridY > 0) {
-        canJump = this.blocks[playerGridY - 1][playerGridX].mined;
-      }
-      
-      if (canJump) {
-        this.player.vy = -8;
-        this.player.onGround = false;
-      }
+      this.player.vy = -12;
+      this.player.onGround = false;
     }
     
     // Gravity
-    this.player.vy += 0.5;
+    this.player.vy += 0.8;
+    
+    // Сохраняем старую позицию для коллизий
+    const oldX = this.player.x;
+    const oldY = this.player.y;
     
     // Update position
     this.player.x += this.player.vx;
     this.player.y += this.player.vy;
     
-    // Обновляем сеточные координаты игрока
-    this.player.gridX = Math.floor(this.player.x / this.blockSize);
-    this.player.gridY = Math.floor(this.player.y / this.blockSize);
-    
     // Проверяем коллизии с блоками
-    this.checkBlockCollisions();
+    this.checkBlockCollisions(oldX, oldY);
     
     // Boundaries
-    this.player.x = Math.max(0, Math.min(this.width - this.player.size, this.player.x));
-    this.player.y = Math.max(0, Math.min(this.height - this.player.size, this.player.y));
+    this.player.x = Math.max(this.playerSize/2, Math.min(this.width - this.playerSize/2, this.player.x));
+    this.player.y = Math.max(this.playerSize/2, Math.min(this.height - this.playerSize/2, this.player.y));
     
     // Update particles
     this.particles = this.particles.filter(p => {
@@ -284,54 +257,63 @@ export default class GameEngine {
     }
   }
   
-  checkBlockCollisions() {
-    const playerGridX = Math.floor(this.player.x / this.blockSize);
-    const playerGridY = Math.floor(this.player.y / this.blockSize);
+  checkBlockCollisions(oldX, oldY) {
+    const playerLeft = this.player.x - this.playerSize/2;
+    const playerRight = this.player.x + this.playerSize/2;
+    const playerTop = this.player.y - this.playerSize/2;
+    const playerBottom = this.player.y + this.playerSize/2;
     
-    // Проверяем, что игрок в пределах сетки
-    if (playerGridX < 0 || playerGridX >= this.gridWidth || 
-        playerGridY < 0 || playerGridY >= this.gridHeight) {
-      return;
-    }
-    
-    // Проверяем блок под игроком (для определения, на земле ли он)
+    // Проверяем коллизии с блоками
     let onGround = false;
-    if (playerGridY + 1 < this.gridHeight) {
-      onGround = !this.blocks[playerGridY + 1][playerGridX].mined;
-    }
     
-    // Проверяем блоки по бокам (для горизонтальных коллизий)
-    let canMoveLeft = true;
-    let canMoveRight = true;
-    
-    if (playerGridX > 0) {
-      canMoveLeft = this.blocks[playerGridY][playerGridX - 1].mined;
-    }
-    if (playerGridX < this.gridWidth - 1) {
-      canMoveRight = this.blocks[playerGridY][playerGridX + 1].mined;
-    }
-    
-    // Применяем коллизии
-    if (onGround) {
-      this.player.onGround = true;
-      if (this.player.vy > 0) {
-        this.player.vy = 0;
-        // Выравниваем игрока по сетке
-        this.player.y = playerGridY * this.blockSize + this.blockSize / 2;
+    // Проверяем блоки вокруг игрока
+    for (let y = Math.floor(playerTop / this.blockSize); y <= Math.floor(playerBottom / this.blockSize); y++) {
+      for (let x = Math.floor(playerLeft / this.blockSize); x <= Math.floor(playerRight / this.blockSize); x++) {
+        if (x >= 0 && x < this.gridWidth && y >= 0 && y < this.gridHeight) {
+          const block = this.blocks[y][x];
+          if (!block.mined) {
+            const blockLeft = x * this.blockSize;
+            const blockRight = (x + 1) * this.blockSize;
+            const blockTop = y * this.blockSize;
+            const blockBottom = (y + 1) * this.blockSize;
+            
+            // Проверяем пересечение
+            if (playerRight > blockLeft && playerLeft < blockRight && 
+                playerBottom > blockTop && playerTop < blockBottom) {
+              
+              // Определяем направление коллизии
+              const overlapLeft = playerRight - blockLeft;
+              const overlapRight = blockRight - playerLeft;
+              const overlapTop = playerBottom - blockTop;
+              const overlapBottom = blockBottom - playerTop;
+              
+              const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+              
+              if (minOverlap === overlapTop && this.player.vy > 0) {
+                // Коллизия сверху (игрок падает на блок)
+                this.player.y = blockTop - this.playerSize/2;
+                this.player.vy = 0;
+                onGround = true;
+              } else if (minOverlap === overlapBottom && this.player.vy < 0) {
+                // Коллизия снизу (игрок ударяется о блок сверху)
+                this.player.y = blockBottom + this.playerSize/2;
+                this.player.vy = 0;
+              } else if (minOverlap === overlapLeft && this.player.vx > 0) {
+                // Коллизия слева
+                this.player.x = blockLeft - this.playerSize/2;
+                this.player.vx = 0;
+              } else if (minOverlap === overlapRight && this.player.vx < 0) {
+                // Коллизия справа
+                this.player.x = blockRight + this.playerSize/2;
+                this.player.vx = 0;
+              }
+            }
+          }
+        }
       }
-    } else {
-      this.player.onGround = false;
     }
     
-    // Горизонтальные коллизии
-    if (!canMoveLeft && this.player.vx < 0) {
-      this.player.vx = 0;
-      this.player.x = playerGridX * this.blockSize + this.blockSize / 2;
-    }
-    if (!canMoveRight && this.player.vx > 0) {
-      this.player.vx = 0;
-      this.player.x = playerGridX * this.blockSize + this.blockSize / 2;
-    }
+    this.player.onGround = onGround;
   }
   
   render() {
