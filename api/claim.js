@@ -107,7 +107,7 @@ export default async function handler(req, res) {
       // Create new claim
       const claimResult = await pool.query(
         `INSERT INTO chest_claims (address, ymd, signature, tickets_awarded)
-         VALUES ($1, $2, $3, 1)
+         VALUES ($1, $2, $3, $4)
          RETURNING *`,
         [normalizedAddress, ymd, signature, 1]
       );
@@ -177,8 +177,8 @@ async function ensureTablesExist() {
       address VARCHAR(42) UNIQUE NOT NULL,
       tickets INTEGER DEFAULT 0,
       total_claims INTEGER DEFAULT 0,
-      first_claim_date DATE,
-      last_claim_date DATE,
+      first_claim_date VARCHAR(10),
+      last_claim_date VARCHAR(10),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
@@ -192,7 +192,7 @@ async function ensureTablesExist() {
     CREATE TABLE IF NOT EXISTS chest_claims (
       id SERIAL PRIMARY KEY,
       address VARCHAR(42) NOT NULL,
-      ymd DATE NOT NULL,
+      ymd VARCHAR(10) NOT NULL,
       signature TEXT NOT NULL,
       tickets_awarded INTEGER DEFAULT 1,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
