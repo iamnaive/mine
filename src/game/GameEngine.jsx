@@ -71,13 +71,9 @@ export default class GameEngine {
   }
   
   spawnPlayer() {
-    // Находим случайное место для спавна
-    let attempts = 0;
-    do {
-      this.player.gridX = Math.floor(Math.random() * this.gridWidth);
-      this.player.gridY = Math.floor(Math.random() * this.gridHeight);
-      attempts++;
-    } while (attempts < 100 && this.blocks[this.player.gridY][this.player.gridX].mined);
+    // Спавним игрока в середине шахты
+    this.player.gridX = Math.floor(this.gridWidth / 2);
+    this.player.gridY = Math.floor(this.gridHeight / 2);
     
     // Выкапываем блок под игроком для спавна
     this.blocks[this.player.gridY][this.player.gridX].mined = true;
@@ -85,6 +81,11 @@ export default class GameEngine {
     // Конвертируем в пиксели
     this.player.x = this.player.gridX * this.blockSize + this.blockSize / 2;
     this.player.y = this.player.gridY * this.blockSize + this.blockSize / 2;
+    
+    // Сбрасываем скорость
+    this.player.vx = 0;
+    this.player.vy = 0;
+    this.player.onGround = false;
   }
   
   setupEvents() {
@@ -214,7 +215,7 @@ export default class GameEngine {
     
     // Проверяем, есть ли блок под игроком
     if (playerGridY + 1 < this.gridHeight && 
-        this.blocks[playerGridY + 1][playerGridX].mined) {
+        !this.blocks[playerGridY + 1][playerGridX].mined) {
       // Игрок падает вниз
       this.player.gridY++;
       this.player.y = this.player.gridY * this.blockSize + this.blockSize / 2;
@@ -228,10 +229,21 @@ export default class GameEngine {
     if (this.keys['KeyA'] || this.keys['ArrowLeft']) this.player.vx = -3;
     if (this.keys['KeyD'] || this.keys['ArrowRight']) this.player.vx = 3;
     
-    // Jumping (только если есть блок под ногами)
+    // Jumping (только если есть блок под ногами и нет блока над головой)
     if ((this.keys['Space'] || this.keys['KeyW'] || this.keys['ArrowUp']) && this.player.onGround) {
-      this.player.vy = -8;
-      this.player.onGround = false;
+      const playerGridX = Math.floor(this.player.x / this.blockSize);
+      const playerGridY = Math.floor(this.player.y / this.blockSize);
+      
+      // Проверяем, есть ли блок над игроком
+      let canJump = true;
+      if (playerGridY > 0) {
+        canJump = this.blocks[playerGridY - 1][playerGridX].mined;
+      }
+      
+      if (canJump) {
+        this.player.vy = -8;
+        this.player.onGround = false;
+      }
     }
     
     // Gravity
@@ -276,24 +288,49 @@ export default class GameEngine {
     const playerGridX = Math.floor(this.player.x / this.blockSize);
     const playerGridY = Math.floor(this.player.y / this.blockSize);
     
-    // Проверяем блок под игроком
-    if (playerGridY + 1 < this.gridHeight && 
-        !this.blocks[playerGridY + 1][playerGridX].mined) {
-      // Игрок падает
-      this.player.vy += 0.5;
-    } else {
-      // Игрок на земле
-      this.player.onGround = true;
-      this.player.vy = 0;
+    // Проверяем, что игрок в пределах сетки
+    if (playerGridX < 0 || playerGridX >= this.gridWidth || 
+        playerGridY < 0 || playerGridY >= this.gridHeight) {
+      return;
     }
     
-    // Проверяем боковые коллизии
-    if (playerGridX >= 0 && playerGridX < this.gridWidth && 
-        playerGridY >= 0 && playerGridY < this.gridHeight) {
-      if (!this.blocks[playerGridY][playerGridX].mined) {
-        // Игрок в пустом блоке - падает
-        this.player.vy += 0.5;
+    // Проверяем блок под игроком (для определения, на земле ли он)
+    let onGround = false;
+    if (playerGridY + 1 < this.gridHeight) {
+      onGround = !this.blocks[playerGridY + 1][playerGridX].mined;
+    }
+    
+    // Проверяем блоки по бокам (для горизонтальных коллизий)
+    let canMoveLeft = true;
+    let canMoveRight = true;
+    
+    if (playerGridX > 0) {
+      canMoveLeft = this.blocks[playerGridY][playerGridX - 1].mined;
+    }
+    if (playerGridX < this.gridWidth - 1) {
+      canMoveRight = this.blocks[playerGridY][playerGridX + 1].mined;
+    }
+    
+    // Применяем коллизии
+    if (onGround) {
+      this.player.onGround = true;
+      if (this.player.vy > 0) {
+        this.player.vy = 0;
+        // Выравниваем игрока по сетке
+        this.player.y = playerGridY * this.blockSize + this.blockSize / 2;
       }
+    } else {
+      this.player.onGround = false;
+    }
+    
+    // Горизонтальные коллизии
+    if (!canMoveLeft && this.player.vx < 0) {
+      this.player.vx = 0;
+      this.player.x = playerGridX * this.blockSize + this.blockSize / 2;
+    }
+    if (!canMoveRight && this.player.vx > 0) {
+      this.player.vx = 0;
+      this.player.x = playerGridX * this.blockSize + this.blockSize / 2;
     }
   }
   
