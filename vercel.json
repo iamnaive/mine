@@ -4,29 +4,8 @@
     { "src": "package.json", "use": "@vercel/static-build", "config": { "distDir": "dist" } },
     { "src": "api/**/*.js", "use": "@vercel/node" }
   ],
-  "routes": [
-    { "src": "^/api/(.*)$", "dest": "/api/$1.js" },
-    { "src": "^/assets/(.*)$", "dest": "/assets/$1" },
-    { "src": "^(?!/api/).*", "dest": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/assets/(.*\\.js)$",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "application/javascript"
-        }
-      ]
-    },
-    {
-      "source": "/assets/(.*\\.css)$",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "text/css"
-        }
-      ]
-    }
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1.js" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
