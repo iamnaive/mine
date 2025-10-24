@@ -5,17 +5,15 @@ export default defineConfig({
   plugins: [react()],
   build: { 
     outDir: 'dist',
+    assetsDir: 'assets',
     rollupOptions: {
       output: {
-        manualChunks: {
-          react: ['react', 'react-dom'],
-          query: ['@tanstack/react-query'],
-          wagmi: ['wagmi', 'viem'],
-          rainbowkit: ['@rainbow-me/rainbowkit']
-        }
+        manualChunks: undefined,
+        assetFileNames: 'assets/[name]-[hash][extname]',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js'
       }
-    },
-    chunkSizeWarningLimit: 1000
+    }
   },
   optimizeDeps: {
     include: ['react', 'react-dom', '@tanstack/react-query', 'wagmi', 'viem', '@rainbow-me/rainbowkit']
