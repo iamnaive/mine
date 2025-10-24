@@ -59,7 +59,15 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       const { address, ymd, signature, nonce } = req.body;
       
+      console.log('Claim POST request received:', {
+        address: address ? `${address.substring(0, 10)}...` : 'missing',
+        ymd,
+        signature: signature ? `${signature.substring(0, 20)}...` : 'missing',
+        nonce: nonce ? `${nonce.substring(0, 10)}...` : 'missing'
+      });
+      
       if (!address || !ymd || !signature || !nonce) {
+        console.log('Missing required fields:', { address: !!address, ymd: !!ymd, signature: !!signature, nonce: !!nonce });
         return res.status(400).json({ 
           success: false,
           error: 'Address, ymd, signature, and nonce are required' 
@@ -174,7 +182,12 @@ Issued At: ${issuedAt}`;
           [normalizedAddress, ymd, signature, 1]
         );
 
-        console.log('Claim created:', claimResult.rows[0]);
+        console.log('Claim created:', claimResult.rows);
+        
+        // Ensure claim was created successfully
+        if (claimResult.rows.length === 0) {
+          throw new Error('Failed to create claim record');
+        }
 
         // Update or create player record
         let playerResult = await client.query(
@@ -204,7 +217,12 @@ Issued At: ${issuedAt}`;
              RETURNING *`,
             [normalizedAddress, ymd]
           );
-          console.log('Player updated:', playerResult.rows[0]);
+          console.log('Player updated:', playerResult.rows);
+          
+          // If no rows were updated, something went wrong
+          if (playerResult.rows.length === 0) {
+            throw new Error('Failed to update player record');
+          }
         }
 
         await client.query('COMMIT');
@@ -213,6 +231,15 @@ Issued At: ${issuedAt}`;
         throw error;
       } finally {
         client.release();
+      }
+
+      // Ensure we have valid data
+      if (!playerResult.rows[0]) {
+        throw new Error('Player data not found after update');
+      }
+      
+      if (!claimResult.rows[0]) {
+        throw new Error('Claim data not found after creation');
       }
 
       return res.json({
