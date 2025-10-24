@@ -57,7 +57,12 @@ export default function GameApp() {
       </div>
 
       <div className="canvas-wrap">
-        <canvas ref={cvsRef} width="480" height="320" />
+        <canvas 
+          ref={cvsRef} 
+          width={window.innerWidth} 
+          height={window.innerHeight - 100}
+          style={{ width: '100vw', height: 'calc(100vh - 100px)' }}
+        />
       </div>
       <p style={{ opacity: 0.7, fontSize: 12 }}>
         Tip: Diamond Yarn drop chance is ~0.5% per chest-equivalent. This demo accrues it to "tickets".
