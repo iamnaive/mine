@@ -1,3 +1,5 @@
+export const config = { runtime: "nodejs20.x" };
+
 import { createPool } from '@vercel/postgres';
 import { recoverMessageAddress } from 'viem';
 
