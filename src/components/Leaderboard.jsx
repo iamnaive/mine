@@ -4,6 +4,7 @@ export default function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sortType, setSortType] = useState('tickets');
 
   useEffect(() => {
     fetchLeaderboard();
@@ -21,12 +22,12 @@ export default function Leaderboard() {
       clearInterval(interval);
       window.removeEventListener('leaderboard-refresh', handleRefresh);
     };
-  }, []);
+  }, [sortType]);
 
   const fetchLeaderboard = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/leaderboard?type=tickets&limit=20`);
+      const response = await fetch(`/api/leaderboard?type=${sortType}&limit=20`);
       const data = await response.json();
       
       if (data.success) {
@@ -58,11 +59,34 @@ export default function Leaderboard() {
     <div className="leaderboard-container">
       <h2>🏆 Leaderboard</h2>
 
+      <div className="sort-buttons">
+        <button 
+          className={sortType === 'tickets' ? 'sort-btn active' : 'sort-btn'}
+          onClick={() => setSortType('tickets')}
+        >
+          🎫 Tickets
+        </button>
+        <button 
+          className={sortType === 'points' ? 'sort-btn active' : 'sort-btn'}
+          onClick={() => setSortType('points')}
+        >
+          💎 Points
+        </button>
+        <button 
+          className={sortType === 'best_score' ? 'sort-btn active' : 'sort-btn'}
+          onClick={() => setSortType('best_score')}
+        >
+          ⭐ Best Score
+        </button>
+      </div>
+
       <div className="leaderboard-table">
         <div className="table-header">
           <div className="col-rank">Rank</div>
           <div className="col-address">Address</div>
           <div className="col-tickets">Tickets</div>
+          <div className="col-points">Points</div>
+          <div className="col-best">Best</div>
         </div>
         
         {leaderboard.length === 0 ? (
@@ -73,6 +97,8 @@ export default function Leaderboard() {
               <div className="col-rank">#{index + 1}</div>
               <div className="col-address">{formatAddress(player.address)}</div>
               <div className="col-tickets">{player.tickets || 0}</div>
+              <div className="col-points">{player.total_points || 0}</div>
+              <div className="col-best">{player.best_score || 0}</div>
             </div>
           ))
         )}

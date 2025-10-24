@@ -1,9 +1,10 @@
 export default class GameEngine {
-  constructor(canvas, { onRunEnd, onChestFound, loadedAssets }) {
+  constructor(canvas, { onRunEnd, onChestFound, onScoreUpdate, loadedAssets }) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.onRunEnd = onRunEnd;
     this.onChestFound = onChestFound;
+    this.onScoreUpdate = onScoreUpdate;
     this.loadedAssets = loadedAssets || {};
     
     this.width = canvas.width;
@@ -174,6 +175,11 @@ export default class GameEngine {
       // Add points depending on block type
       const points = this.getBlockPoints(block.type);
       this.score += points;
+      
+      // Send score update to server
+      if (this.onScoreUpdate) {
+        this.onScoreUpdate(points);
+      }
       
       // Check for chest (only from 2nd to 3rd minute)
       if (this.timeLeft <= 120 && this.timeLeft > 0 && !this.chest && !this.chestFound) {

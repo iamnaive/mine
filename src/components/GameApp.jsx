@@ -129,6 +129,23 @@ export default function GameApp() {
         setCanClaimToday(false);
         setGameState('start');
       },
+      onScoreUpdate: async (points) => {
+        // Send score update to server
+        if (address) {
+          try {
+            await fetch('/api/update-score', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                address: address,
+                score: points
+              })
+            });
+          } catch (error) {
+            console.error('Failed to update score:', error);
+          }
+        }
+      },
       loadedAssets: loadedAssets,
       onChestFound: async (tickets = 0) => {
         // First, try to claim the chest through the API

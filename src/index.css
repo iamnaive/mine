@@ -323,6 +323,36 @@ canvas {
   background-clip: text;
 }
 
+.sort-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 15px;
+  justify-content: center;
+}
+
+.sort-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sort-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.sort-btn.active {
+  background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+
 .leaderboard-table {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -332,7 +362,7 @@ canvas {
 
 .table-header {
   display: grid;
-  grid-template-columns: 60px 1fr 80px;
+  grid-template-columns: 60px 1fr 80px 80px 80px;
   gap: 12px;
   background: rgba(255, 255, 255, 0.1);
   padding: 12px;
@@ -343,7 +373,7 @@ canvas {
 
 .table-row {
   display: grid;
-  grid-template-columns: 60px 1fr 80px;
+  grid-template-columns: 60px 1fr 80px 80px 80px;
   gap: 12px;
   padding: 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -373,6 +403,18 @@ canvas {
 .col-tickets {
   text-align: center;
   color: #ffffff;
+  font-weight: 500;
+}
+
+.col-points {
+  text-align: center;
+  color: #60a5fa;
+  font-weight: 500;
+}
+
+.col-best {
+  text-align: center;
+  color: #fbbf24;
   font-weight: 500;
 }
 
