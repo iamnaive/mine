@@ -102,37 +102,52 @@ export default async function handler(req, res) {
 }
 
 async function ensureTableExists() {
-  const createTableQuery = `
-    CREATE TABLE IF NOT EXISTS players (
-      id SERIAL PRIMARY KEY,
-      address VARCHAR(42) UNIQUE NOT NULL,
-      tickets INTEGER DEFAULT 0,
-      total_claims INTEGER DEFAULT 0,
-      total_points INTEGER DEFAULT 0,
-      best_score INTEGER DEFAULT 0,
-      first_claim_date VARCHAR(10),
-      last_claim_date VARCHAR(10),
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-    
-    CREATE INDEX IF NOT EXISTS idx_players_address ON players(address);
-    CREATE INDEX IF NOT EXISTS idx_players_tickets ON players(tickets DESC);
-    CREATE INDEX IF NOT EXISTS idx_players_claims ON players(total_claims DESC);
-    CREATE INDEX IF NOT EXISTS idx_players_points ON players(total_points DESC);
-    CREATE INDEX IF NOT EXISTS idx_players_best_score ON players(best_score DESC);
-  `;
+  try {
+    const createTableQuery = `
+      CREATE TABLE IF NOT EXISTS players (
+        id SERIAL PRIMARY KEY,
+        address VARCHAR(42) UNIQUE NOT NULL,
+        tickets INTEGER DEFAULT 0,
+        total_claims INTEGER DEFAULT 0,
+        total_points INTEGER DEFAULT 0,
+        best_score INTEGER DEFAULT 0,
+        first_claim_date VARCHAR(10),
+        last_claim_date VARCHAR(10),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
 
-  // Add missing columns if they don't exist
-  const addMissingColumns = `
-    ALTER TABLE players 
-    ADD COLUMN IF NOT EXISTS total_claims INTEGER DEFAULT 0,
-    ADD COLUMN IF NOT EXISTS total_points INTEGER DEFAULT 0,
-    ADD COLUMN IF NOT EXISTS best_score INTEGER DEFAULT 0,
-    ADD COLUMN IF NOT EXISTS first_claim_date VARCHAR(10),
-    ADD COLUMN IF NOT EXISTS last_claim_date VARCHAR(10);
-  `;
-  
-  await pool.query(createTableQuery);
-  await pool.query(addMissingColumns);
+    // Add missing columns if they don't exist
+    const addMissingColumns = `
+      ALTER TABLE players 
+      ADD COLUMN IF NOT EXISTS total_claims INTEGER DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS total_points INTEGER DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS best_score INTEGER DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS first_claim_date VARCHAR(10),
+      ADD COLUMN IF NOT EXISTS last_claim_date VARCHAR(10);
+    `;
+
+    // Create indexes
+    const createIndexes = `
+      CREATE INDEX IF NOT EXISTS idx_players_address ON players(address);
+      CREATE INDEX IF NOT EXISTS idx_players_tickets ON players(tickets DESC);
+      CREATE INDEX IF NOT EXISTS idx_players_claims ON players(total_claims DESC);
+      CREATE INDEX IF NOT EXISTS idx_players_points ON players(total_points DESC);
+      CREATE INDEX IF NOT EXISTS idx_players_best_score ON players(best_score DESC);
+    `;
+    
+    await pool.query(createTableQuery);
+    console.log('✓ Players table created/verified');
+    
+    await pool.query(addMissingColumns);
+    console.log('✓ Missing columns added');
+    
+    await pool.query(createIndexes);
+    console.log('✓ Indexes created');
+    
+  } catch (error) {
+    console.error('Error ensuring table exists:', error);
+    throw error;
+  }
 }
