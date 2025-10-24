@@ -302,7 +302,7 @@ canvas {
 
 .table-header {
   display: grid;
-  grid-template-columns: 60px 1fr 80px 80px 100px 100px;
+  grid-template-columns: 60px 1fr 80px;
   gap: 12px;
   background: rgba(255, 255, 255, 0.1);
   padding: 12px;
@@ -313,7 +313,7 @@ canvas {
 
 .table-row {
   display: grid;
-  grid-template-columns: 60px 1fr 80px 80px 100px 100px;
+  grid-template-columns: 60px 1fr 80px;
   gap: 12px;
   padding: 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -340,18 +340,10 @@ canvas {
   font-family: monospace;
 }
 
-.col-tickets,
-.col-claims {
+.col-tickets {
   text-align: center;
   color: #ffffff;
   font-weight: 500;
-}
-
-.col-first,
-.col-last {
-  text-align: center;
-  color: #9ca3af;
-  font-size: 12px;
 }
 
 .no-data {

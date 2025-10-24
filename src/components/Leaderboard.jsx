@@ -63,9 +63,6 @@ export default function Leaderboard() {
           <div className="col-rank">Rank</div>
           <div className="col-address">Address</div>
           <div className="col-tickets">Tickets</div>
-          <div className="col-claims">Claims</div>
-          <div className="col-first">First</div>
-          <div className="col-last">Last</div>
         </div>
         
         {leaderboard.length === 0 ? (
@@ -76,9 +73,6 @@ export default function Leaderboard() {
               <div className="col-rank">#{index + 1}</div>
               <div className="col-address">{formatAddress(player.address)}</div>
               <div className="col-tickets">{player.tickets || 0}</div>
-              <div className="col-claims">{player.total_claims || 0}</div>
-              <div className="col-first">{player.first_claim_date || 'N/A'}</div>
-              <div className="col-last">{player.last_claim_date || 'N/A'}</div>
             </div>
           ))
         )}
