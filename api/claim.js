@@ -47,7 +47,14 @@ export default async function handler(req, res) {
 
       // Verify signature
       const message = `WE_CHEST:${address}:${ymd}`;
-      console.log('Claim attempt:', { address, ymd, signature, message });
+      console.log('Claim attempt:', { 
+        address, 
+        ymd, 
+        signature: signature.substring(0, 20) + '...', 
+        message,
+        addressLength: address.length,
+        signatureLength: signature.length
+      });
       
       let recoveredAddress;
       try {
@@ -60,15 +67,26 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Invalid signature' });
       }
 
+      console.log('Signature verification result:', { 
+        recoveredAddress, 
+        originalAddress: address,
+        recoveredLower: recoveredAddress.toLowerCase(),
+        originalLower: address.toLowerCase(),
+        match: recoveredAddress.toLowerCase() === address.toLowerCase()
+      });
+
       if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
         console.error('Signature does not match address:', { recoveredAddress, address });
         return res.status(400).json({ error: 'Signature does not match address' });
       }
 
+      // Normalize address to lowercase for database operations
+      const normalizedAddress = address.toLowerCase();
+
       // Check if already claimed today
       const existingClaim = await pool.query(
         'SELECT * FROM chest_claims WHERE address = $1 AND ymd = $2',
-        [address, ymd]
+        [normalizedAddress, ymd]
       );
 
       console.log('Existing claim check:', existingClaim.rows);
@@ -87,7 +105,7 @@ export default async function handler(req, res) {
         `INSERT INTO chest_claims (address, ymd, signature, tickets_awarded)
          VALUES ($1, $2, $3, 1)
          RETURNING *`,
-        [address, ymd, signature, 1]
+        [normalizedAddress, ymd, signature, 1]
       );
 
       console.log('Claim created:', claimResult.rows[0]);
@@ -95,7 +113,7 @@ export default async function handler(req, res) {
       // Update or create player record
       let playerResult = await pool.query(
         'SELECT * FROM players WHERE address = $1',
-        [address]
+        [normalizedAddress]
       );
 
       console.log('Player lookup:', playerResult.rows);
@@ -106,7 +124,7 @@ export default async function handler(req, res) {
           `INSERT INTO players (address, tickets, total_claims, first_claim_date)
            VALUES ($1, 1, 1, $2)
            RETURNING *`,
-          [address, ymd]
+          [normalizedAddress, ymd]
         );
         console.log('New player created:', playerResult.rows[0]);
       } else {
@@ -118,7 +136,7 @@ export default async function handler(req, res) {
                last_claim_date = $2
            WHERE address = $1
            RETURNING *`,
-          [address, ymd]
+          [normalizedAddress, ymd]
         );
         console.log('Player updated:', playerResult.rows[0]);
       }

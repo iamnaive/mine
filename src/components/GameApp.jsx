@@ -117,7 +117,7 @@ export default function GameApp() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              address: address.toLowerCase(), // Normalize address
+              address: address, // Keep original address for signature verification
               ymd: currentYmd,
               signature
             })
@@ -252,7 +252,7 @@ export default function GameApp() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          address: address.toLowerCase(), // Normalize address
+          address: address, // Keep original address for signature verification
           ymd: currentYmd,
           signature
         })
