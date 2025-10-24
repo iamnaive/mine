@@ -11,7 +11,7 @@ export default function GameApp() {
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
 
-  const [gameState, setGameState] = useState('start'); // 'start', 'playing', 'chest-found'
+  const [gameState, setGameState] = useState('start'); // 'start', 'loading', 'playing', 'chest-found'
   const [stats, setStats] = useState({
     tickets: 0,
     totalClaims: 0
@@ -19,6 +19,7 @@ export default function GameApp() {
   const [gameEngine, setGameEngine] = useState(null);
   const [canClaimToday, setCanClaimToday] = useState(true);
   const [currentYmd, setCurrentYmd] = useState(null);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
 
   // Helper function for signing with wagmi or fallback
   const signWithWagmiOrFallback = useCallback(async (address, message) => {
@@ -107,6 +108,13 @@ export default function GameApp() {
     return () => clearInterval(interval);
   }, []);
 
+  // Handle transition from loading to playing when images are loaded
+  useEffect(() => {
+    if (gameState === 'loading' && imagesLoaded) {
+      setGameState('playing');
+    }
+  }, [gameState, imagesLoaded]);
+
   useEffect(() => {
     if (!cvsRef.current || gameState !== 'playing') return;
     const engine = new GameEngine(cvsRef.current, {
@@ -114,6 +122,9 @@ export default function GameApp() {
         // Game ended without finding chest - mark as played today
         setCanClaimToday(false);
         setGameState('start');
+      },
+      onImagesLoaded: () => {
+        setImagesLoaded(true);
       },
       onChestFound: async (tickets = 0) => {
         // First, try to claim the chest through the API
@@ -161,7 +172,7 @@ export default function GameApp() {
           
           const { nonce, domain, chainId: serverChainId, issuedAt, expirationTime } = nonceData;
           
-          // Create SIWE-style message
+          // Create SIWE-style message (must match server exactly)
           const message = `${domain} wants you to sign in with your Ethereum account:
 ${address}
 
@@ -284,7 +295,9 @@ Issued At: ${issuedAt}`;
       return;
     }
     
-    setGameState('playing');
+    // Start loading screen
+    setGameState('loading');
+    setImagesLoaded(false);
   };
 
   const resetGame = () => {
@@ -432,6 +445,19 @@ Issued At: ${issuedAt}`;
             )}
             
             <Leaderboard />
+          </div>
+        );
+      }
+
+      if (gameState === 'loading') {
+        return (
+          <div className="loading-screen">
+            <div className="loading-content">
+              <h2>⛏️ Loading Mine...</h2>
+              <div className="loading-spinner"></div>
+              <p>Preparing blocks and textures...</p>
+              <p className="loading-subtitle">This may take a few seconds</p>
+            </div>
           </div>
         );
       }

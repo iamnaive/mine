@@ -1,9 +1,10 @@
 export default class GameEngine {
-  constructor(canvas, { onRunEnd, onChestFound }) {
+  constructor(canvas, { onRunEnd, onChestFound, onImagesLoaded }) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.onRunEnd = onRunEnd;
     this.onChestFound = onChestFound;
+    this.onImagesLoaded = onImagesLoaded;
     
     this.width = canvas.width;
     this.height = canvas.height;
@@ -48,15 +49,28 @@ export default class GameEngine {
   
   loadBlockImages() {
     const blockTypes = ['stone', 'iron', 'gold', 'diamond'];
-    const imageFiles = ['b1.png', 'b2.png', 'b3.png', 'b4.png'];
+    const imageFiles = ['b4.png', 'b2.png', 'b3.png', 'b1.png']; // b4=stone, b1=diamond
+    
+    let loadedCount = 0;
+    const totalImages = blockTypes.length + 1; // +1 for b5.png
+    
+    const checkAllLoaded = () => {
+      loadedCount++;
+      if (loadedCount >= totalImages && this.onImagesLoaded) {
+        console.log('All block images loaded!');
+        this.onImagesLoaded();
+      }
+    };
     
     blockTypes.forEach((type, index) => {
       const img = new Image();
       img.onload = () => {
         console.log(`Loaded block image: ${type} (${imageFiles[index]})`);
+        checkAllLoaded();
       };
       img.onerror = () => {
         console.error(`Failed to load block image: ${imageFiles[index]}`);
+        checkAllLoaded(); // Still count as "loaded" to not block the game
       };
       img.src = `/images/${imageFiles[index]}`;
       this.blockImages[type] = img;
@@ -66,6 +80,11 @@ export default class GameEngine {
     const specialImg = new Image();
     specialImg.onload = () => {
       console.log('Loaded special block image: b5.png');
+      checkAllLoaded();
+    };
+    specialImg.onerror = () => {
+      console.error('Failed to load special block image: b5.png');
+      checkAllLoaded();
     };
     specialImg.src = '/images/b5.png';
     this.blockImages['special'] = specialImg;
