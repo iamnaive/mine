@@ -76,17 +76,29 @@ export default function GameApp() {
         try {
           console.log('Chest found! Starting claim process...', { address, currentYmd, chainId });
           
-          // Check network
+          // Check network and force switch if needed
           if (chainId !== 10143) {
+            console.log('Wrong network detected:', chainId, 'Expected: 10143');
             alert('Please switch to Monad Testnet (Chain ID: 10143) to claim chest!');
             try {
+              console.log('Attempting to switch to Monad Testnet...');
               await switchChain({ chainId: 10143 });
+              
+              // Wait a moment for the chain to switch
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              
+              // Check if switch was successful
+              if (chainId !== 10143) {
+                alert('Network switch failed. Please switch to Monad Testnet manually and try again.');
+                setGameState('start');
+                return;
+              }
             } catch (switchError) {
               console.error('Failed to switch chain:', switchError);
-              alert('Failed to switch to Monad Testnet. Please switch manually.');
+              alert('Failed to switch to Monad Testnet. Please switch manually and try again.');
+              setGameState('start');
+              return;
             }
-            setGameState('start');
-            return;
           }
           
           const message = `WE_CHEST:${address}:${currentYmd}`;
@@ -161,14 +173,25 @@ export default function GameApp() {
     }
     
     if (chainId !== 10143) {
+      console.log('Wrong network detected for game start:', chainId, 'Expected: 10143');
       alert('Please switch to Monad Testnet (Chain ID: 10143) to play!');
       try {
-        switchChain({ chainId: 10143 });
+        console.log('Attempting to switch to Monad Testnet for game...');
+        await switchChain({ chainId: 10143 });
+        
+        // Wait a moment for the chain to switch
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Check if switch was successful
+        if (chainId !== 10143) {
+          alert('Network switch failed. Please switch to Monad Testnet manually and try again.');
+          return;
+        }
       } catch (switchError) {
-        console.error('Failed to switch chain:', switchError);
-        alert('Failed to switch to Monad Testnet. Please switch manually.');
+        console.error('Failed to switch chain for game:', switchError);
+        alert('Failed to switch to Monad Testnet. Please switch manually and try again.');
+        return;
       }
-      return;
     }
     
     if (!canClaimToday) {
@@ -190,14 +213,25 @@ export default function GameApp() {
     }
 
     if (chainId !== 10143) {
+      console.log('Wrong network detected for claim:', chainId, 'Expected: 10143');
       alert('Please switch to Monad Testnet (Chain ID: 10143) to claim chest!');
       try {
+        console.log('Attempting to switch to Monad Testnet for claim...');
         await switchChain({ chainId: 10143 });
+        
+        // Wait a moment for the chain to switch
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Check if switch was successful
+        if (chainId !== 10143) {
+          alert('Network switch failed. Please switch to Monad Testnet manually and try again.');
+          return;
+        }
       } catch (switchError) {
-        console.error('Failed to switch chain:', switchError);
-        alert('Failed to switch to Monad Testnet. Please switch manually.');
+        console.error('Failed to switch chain for claim:', switchError);
+        alert('Failed to switch to Monad Testnet. Please switch manually and try again.');
+        return;
       }
-      return;
     }
 
     if (!canClaimToday) {
@@ -275,9 +309,10 @@ export default function GameApp() {
             
             {isConnected && (
               <div className="claim-section">
+                <p>Network: {chainId === 10143 ? 'Monad Testnet ✅' : `Chain ${chainId} ❌`}</p>
                 <p>Daily Chest Available: {canClaimToday ? '✅ Yes' : '❌ No'}</p>
                 <p>Your Tickets: {stats.tickets}</p>
-                {canClaimToday && (
+                {canClaimToday && chainId === 10143 && (
                   <button 
                     className="claim-btn" 
                     onClick={claimChest}
@@ -285,14 +320,24 @@ export default function GameApp() {
                     Claim Daily Chest
                   </button>
                 )}
+                {canClaimToday && chainId !== 10143 && (
+                  <p style={{color: 'orange'}}>⚠️ Please switch to Monad Testnet to claim chest</p>
+                )}
                 {!canClaimToday && (
                   <p>You have already claimed your daily chest today!</p>
                 )}
               </div>
             )}
             
-            <button className="start-btn" onClick={startGame}>
-              {isConnected ? 'Start Game' : 'Connect Wallet'}
+            <button 
+              className="start-btn" 
+              onClick={startGame}
+              disabled={isConnected && chainId !== 10143}
+            >
+              {isConnected ? 
+                (chainId === 10143 ? 'Start Game' : 'Switch to Monad Testnet') : 
+                'Connect Wallet'
+              }
             </button>
             <div className="game-info">
               <h3>How to play:</h3>
@@ -330,16 +375,18 @@ export default function GameApp() {
 
   return (
     <>
-      <div className="kv">
-        <div>Address</div>
-        <div>{isConnected ? address : "Not connected"}</div>
-        <div>Total Claims</div>
-        <div>{stats.totalClaims}</div>
-        <div>Tickets</div>
-        <div>{stats.tickets}</div>
-        <div>Can Claim Today</div>
-        <div>{canClaimToday ? "Yes" : "No"}</div>
-      </div>
+          <div className="kv">
+            <div>Address</div>
+            <div>{isConnected ? address : "Not connected"}</div>
+            <div>Network</div>
+            <div>{chainId === 10143 ? "Monad Testnet ✅" : `Chain ${chainId} ❌`}</div>
+            <div>Total Claims</div>
+            <div>{stats.totalClaims}</div>
+            <div>Tickets</div>
+            <div>{stats.tickets}</div>
+            <div>Can Claim Today</div>
+            <div>{canClaimToday ? "Yes" : "No"}</div>
+          </div>
 
       <div className="canvas-wrap">
         <canvas 
