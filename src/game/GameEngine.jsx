@@ -257,9 +257,24 @@ export default class GameEngine {
     
     // Jumping (single press only) - increased jump power
     if ((this.keys['Space'] || this.keys['KeyW'] || this.keys['ArrowUp']) && this.player.onGround && !this.player.jumping) {
-      this.player.vy = -18; // Increased from -10 to -18 (1.8x stronger)
-      this.player.onGround = false;
-      this.player.jumping = true;
+      // Check if there's space to jump (check all blocks above player)
+      const playerGridX = Math.floor(this.player.x / this.blockSize);
+      const playerGridY = Math.floor(this.player.y / this.blockSize);
+      
+      let canJump = true;
+      // Check blocks above player (up to jump height)
+      for (let y = playerGridY - 1; y >= Math.max(0, playerGridY - 4); y--) {
+        if (y >= 0 && y < this.gridHeight && !this.blocks[y][playerGridX].mined) {
+          canJump = false;
+          break;
+        }
+      }
+      
+      if (canJump) {
+        this.player.vy = -18; // Increased from -10 to -18 (1.8x stronger)
+        this.player.onGround = false;
+        this.player.jumping = true;
+      }
     }
     
     // Reset jump flag when key is released
