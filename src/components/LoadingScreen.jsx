@@ -4,6 +4,10 @@ const LoadingScreen = ({ progress, isLoading, currentAsset }) => {
   if (!isLoading) return null;
 
   const getLoadingText = (assetName) => {
+    if (assetName && assetName.startsWith('player_walk_')) {
+      return 'Loading player animations...';
+    }
+    
     switch (assetName) {
       case 'stone':
         return 'Loading stone blocks...';

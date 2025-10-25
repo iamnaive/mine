@@ -38,7 +38,12 @@ export default class GameEngine {
       vy: 0,
       size: this.playerSize,
       onGround: false,
-      jumping: false
+      jumping: false,
+      // Animation properties
+      facing: 'right', // 'left' or 'right'
+      walkFrame: 0,
+      walkTimer: 0,
+      isWalking: false
     };
     
     // 2D array of blocks (true = block exists, false = empty)
@@ -709,6 +714,41 @@ export default class GameEngine {
     this.ctx.arc(x + size/8, floatY - size/8, size/16, 0, Math.PI * 2);
     this.ctx.fill();
   }
+
+  // Update player animation
+  updatePlayerAnimation() {
+    // Check if player is moving
+    const isMoving = Math.abs(this.player.vx) > 0.1;
+    this.player.isWalking = isMoving;
+    
+    // Update facing direction
+    if (this.player.vx > 0.1) {
+      this.player.facing = 'right';
+    } else if (this.player.vx < -0.1) {
+      this.player.facing = 'left';
+    }
+    
+    // Update walk animation
+    if (this.player.isWalking) {
+      this.player.walkTimer += 1;
+      if (this.player.walkTimer >= 8) { // Change frame every 8 frames (adjust speed)
+        this.player.walkTimer = 0;
+        this.player.walkFrame = (this.player.walkFrame + 1) % 8; // 8 frames (0-7)
+      }
+    } else {
+      // Reset to first frame when not walking
+      this.player.walkFrame = 0;
+      this.player.walkTimer = 0;
+    }
+  }
+
+  // Get current player sprite
+  getPlayerSprite() {
+    const direction = this.player.facing;
+    const frame = this.player.walkFrame;
+    const spriteName = `player_walk_${direction}_${frame}`;
+    return this.loadedAssets[spriteName] || null;
+  }
   
   
   updateCamera() {
@@ -733,6 +773,9 @@ export default class GameEngine {
   update() {
     // Update camera first
     this.updateCamera();
+    
+    // Update player animation
+    this.updatePlayerAnimation();
     
     // Player movement (reduced speed)
     this.player.vx = 0;
@@ -965,14 +1008,27 @@ export default class GameEngine {
       this.ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
     });
     
-    // Draw player
-    this.ctx.fillStyle = '#8B5CF6';
-    this.ctx.fillRect(this.player.x - this.player.size/2, this.player.y - this.player.size/2, this.player.size, this.player.size);
-    
-    // Player border
-    this.ctx.strokeStyle = '#A855F7';
-    this.ctx.lineWidth = 2;
-    this.ctx.strokeRect(this.player.x - this.player.size/2, this.player.y - this.player.size/2, this.player.size, this.player.size);
+    // Draw player with animation
+    const playerSprite = this.getPlayerSprite();
+    if (playerSprite && playerSprite.complete && playerSprite.naturalWidth > 0) {
+      // Draw player sprite
+      this.ctx.drawImage(
+        playerSprite,
+        this.player.x - this.player.size/2,
+        this.player.y - this.player.size/2,
+        this.player.size,
+        this.player.size
+      );
+    } else {
+      // Fallback to colored rectangle if sprite not loaded
+      this.ctx.fillStyle = '#8B5CF6';
+      this.ctx.fillRect(this.player.x - this.player.size/2, this.player.y - this.player.size/2, this.player.size, this.player.size);
+      
+      // Player border
+      this.ctx.strokeStyle = '#A855F7';
+      this.ctx.lineWidth = 2;
+      this.ctx.strokeRect(this.player.x - this.player.size/2, this.player.y - this.player.size/2, this.player.size, this.player.size);
+    }
     
     // Draw debug grid (optional - can be removed later)
     if (this.debugMode) {
