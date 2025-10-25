@@ -49,7 +49,6 @@ export default function Leaderboard() {
   if (loading) {
     return (
       <div className="leaderboard-container">
-        <h2>🏆 Leaderboard</h2>
         <div className="loading">Loading...</div>
       </div>
     );
@@ -57,7 +56,6 @@ export default function Leaderboard() {
 
   return (
     <div className="leaderboard-container">
-      <h2>🏆 Leaderboard</h2>
 
       <div className="sort-buttons">
         <button 

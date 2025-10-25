@@ -422,23 +422,12 @@ canvas {
   pointer-events: none;
 }
 
-.leaderboard-container h2 {
-  text-align: center;
-  margin-bottom: 32px;
-  background: linear-gradient(45deg, #fbbf24, #f59e0b, #ff6b6b);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-size: 2.5rem;
-  font-weight: 700;
-  position: relative;
-  z-index: 1;
-}
+/* Leaderboard title removed - no styles needed */
 
 .sort-buttons {
   display: flex;
   gap: 8px;
-  margin-bottom: 15px;
+  margin: 0 0 15px 0;
   justify-content: center;
 }
 
