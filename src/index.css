@@ -199,7 +199,7 @@ canvas {
 }
 
 .start-btn.inactive::after {
-  content: '👆 Connect wallet first';
+  content: attr(title);
   position: absolute;
   top: -40px;
   left: 50%;
@@ -213,6 +213,7 @@ canvas {
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
+  z-index: 1000;
 }
 
 .start-btn.inactive:hover::after {
@@ -984,6 +985,11 @@ canvas {
   height: 50px;
 }
 
+.header-connect-btn {
+  width: 160px;
+  height: 45px;
+}
+
 .btn-help {
   width: 150px;
   height: 45px;
@@ -1019,4 +1025,31 @@ canvas {
 
 .graphic-btn.active:hover {
   transform: scale(1.1);
+}
+
+/* Tooltip for inactive graphic buttons */
+.graphic-btn.inactive {
+  position: relative;
+}
+
+.graphic-btn.inactive::after {
+  content: attr(title);
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.graphic-btn.inactive:hover::after {
+  opacity: 1;
 }

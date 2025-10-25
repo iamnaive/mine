@@ -1,7 +1,7 @@
 import React from "react";
 import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { RainbowKitProvider, ConnectButton, darkTheme } from "@rainbow-me/rainbowkit";
+import { RainbowKitProvider, ConnectButton, darkTheme, useConnectModal } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css";
 import { useAccount, useChainId, useSwitchChain, useDisconnect } from "wagmi";
 import { config } from "./wagmi";
@@ -10,11 +10,23 @@ import GameApp from "./components/GameApp";
 const queryClient = new QueryClient();
 
 function AppContent() {
+  const { openConnectModal } = useConnectModal();
+
   return (
     <div className="container">
       <div className="header">
         <div className="header-group">
-          <ConnectButton />
+          {/* Custom graphic Connect Wallet button in top-right corner */}
+          <button 
+            className="graphic-btn btn-connect header-connect-btn"
+            onClick={openConnectModal}
+          >
+            <img 
+              src="/images/Connect.png"
+              alt="Connect Wallet" 
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+            />
+          </button>
         </div>
       </div>
 

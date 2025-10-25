@@ -408,30 +408,19 @@ export default function GameApp() {
           <div className="start-screen">
             <p>Connect your wallet using the button in the top-right corner, then start digging!</p>
             
-            {isConnected ? (
-              <button 
-                className={`graphic-btn btn-start ${!canClaimToday || chainId !== 10143 ? 'inactive' : ''}`}
-                onClick={startGame}
-                disabled={chainId !== 10143 || !canClaimToday}
-              >
-                <img 
-                  src={loadedAssets.ui_start?.src || '/images/start.png'} 
-                  alt="Start Game" 
-                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                />
-              </button>
-            ) : (
-              <button 
-                className="graphic-btn btn-connect"
-                onClick={() => {/* Connect wallet handled by RainbowKit */}}
-              >
-                <img 
-                  src={loadedAssets.ui_connect?.src || '/images/Connect.png'} 
-                  alt="Connect Wallet" 
-                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                />
-              </button>
-            )}
+            {/* Always show Start Game button, but make it inactive if wallet not connected or conditions not met */}
+            <button 
+              className={`graphic-btn btn-start ${!isConnected || !canClaimToday || chainId !== 10143 ? 'inactive' : ''}`}
+              onClick={isConnected ? startGame : undefined}
+              disabled={!isConnected || chainId !== 10143 || !canClaimToday}
+              title={!isConnected ? 'Connect wallet first' : (!canClaimToday ? 'Already played today' : (chainId !== 10143 ? 'Switch to Monad Testnet' : 'Start Game'))}
+            >
+              <img 
+                src={loadedAssets.ui_start?.src || '/images/start.png'} 
+                alt="Start Game" 
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              />
+            </button>
             
             {isConnected && !canClaimToday && timeUntilReset && (
               <div className="cooldown-info">
