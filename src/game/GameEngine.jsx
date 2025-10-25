@@ -53,6 +53,19 @@ export default class GameEngine {
     this.mouse = { x: 0, y: 0, down: false };
     this.debugMode = false; // Set to true to see grid lines
     
+    // Camera system
+    this.camera = {
+      x: 0,
+      y: 0,
+      targetX: 0,
+      targetY: 0,
+      followSpeed: 0.1 // How fast camera follows player (0.1 = smooth, 1.0 = instant)
+    };
+    
+    // Background image
+    this.backgroundImage = new Image();
+    this.backgroundImage.src = '/images/mine_bg.png';
+    
     this.generateWorld();
     this.setupEvents();
     this.gameLoop();
@@ -128,8 +141,9 @@ export default class GameEngine {
       // Scale mouse coordinates to match canvas internal size
       const scaleX = this.canvas.width / rect.width;
       const scaleY = this.canvas.height / rect.height;
-      this.mouse.x = (e.clientX - rect.left) * scaleX;
-      this.mouse.y = (e.clientY - rect.top) * scaleY;
+      // Add camera offset to get world coordinates
+      this.mouse.x = (e.clientX - rect.left) * scaleX + this.camera.x;
+      this.mouse.y = (e.clientY - rect.top) * scaleY + this.camera.y;
     });
     
     this.canvas.addEventListener('mousedown', (e) => {
@@ -139,8 +153,9 @@ export default class GameEngine {
       const rect = this.canvas.getBoundingClientRect();
       const scaleX = this.canvas.width / rect.width;
       const scaleY = this.canvas.height / rect.height;
-      this.mouse.x = (e.clientX - rect.left) * scaleX;
-      this.mouse.y = (e.clientY - rect.top) * scaleY;
+      // Add camera offset to get world coordinates
+      this.mouse.x = (e.clientX - rect.left) * scaleX + this.camera.x;
+      this.mouse.y = (e.clientY - rect.top) * scaleY + this.camera.y;
       
       this.handleMining();
       e.preventDefault(); // Prevent text selection
@@ -156,8 +171,9 @@ export default class GameEngine {
       const rect = this.canvas.getBoundingClientRect();
       const scaleX = this.canvas.width / rect.width;
       const scaleY = this.canvas.height / rect.height;
-      this.mouse.x = (e.clientX - rect.left) * scaleX;
-      this.mouse.y = (e.clientY - rect.top) * scaleY;
+      // Add camera offset to get world coordinates
+      this.mouse.x = (e.clientX - rect.left) * scaleX + this.camera.x;
+      this.mouse.y = (e.clientY - rect.top) * scaleY + this.camera.y;
       
       this.handleMining();
       e.preventDefault();
@@ -326,7 +342,29 @@ export default class GameEngine {
   }
   
   
+  updateCamera() {
+    // Set camera target to player position (centered on player)
+    this.camera.targetX = this.player.x - this.width / 2;
+    this.camera.targetY = this.player.y - this.height / 2;
+    
+    // Smooth camera movement
+    this.camera.x += (this.camera.targetX - this.camera.x) * this.camera.followSpeed;
+    this.camera.y += (this.camera.targetY - this.camera.y) * this.camera.followSpeed;
+    
+    // Keep camera within world bounds
+    const maxCameraX = this.width - this.width;
+    const maxCameraY = this.height - this.height;
+    const minCameraX = 0;
+    const minCameraY = 0;
+    
+    this.camera.x = Math.max(minCameraX, Math.min(maxCameraX, this.camera.x));
+    this.camera.y = Math.max(minCameraY, Math.min(maxCameraY, this.camera.y));
+  }
+
   update() {
+    // Update camera first
+    this.updateCamera();
+    
     // Player movement (reduced speed)
     this.player.vx = 0;
     if (this.keys['KeyA'] || this.keys['ArrowLeft']) this.player.vx = -2;
@@ -468,6 +506,25 @@ export default class GameEngine {
     this.ctx.fillStyle = '#0b0f1a';
     this.ctx.fillRect(0, 0, this.width, this.height);
     
+    // Save context for camera transform
+    this.ctx.save();
+    
+    // Apply camera transform
+    this.ctx.translate(-this.camera.x, -this.camera.y);
+    
+    // Draw background image
+    if (this.backgroundImage.complete && this.backgroundImage.naturalWidth > 0) {
+      // Tile the background image to cover the entire world
+      const bgWidth = this.backgroundImage.naturalWidth;
+      const bgHeight = this.backgroundImage.naturalHeight;
+      
+      for (let x = 0; x < this.width + bgWidth; x += bgWidth) {
+        for (let y = 0; y < this.height + bgHeight; y += bgHeight) {
+          this.ctx.drawImage(this.backgroundImage, x, y, bgWidth, bgHeight);
+        }
+      }
+    }
+    
     // Draw blocks
     for (let y = 0; y < this.gridHeight; y++) {
       for (let x = 0; x < this.gridWidth; x++) {
@@ -561,6 +618,9 @@ export default class GameEngine {
         this.ctx.stroke();
       }
     }
+    
+    // Restore context (UI elements should not be affected by camera)
+    this.ctx.restore();
     
     // Draw UI - larger and more visible
     this.ctx.fillStyle = '#ffffff';
