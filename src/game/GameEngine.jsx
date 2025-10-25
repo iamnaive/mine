@@ -150,12 +150,33 @@ export default class GameEngine {
     
     this.canvas.addEventListener('mousedown', (e) => {
       this.mouse.down = true;
+      
+      // Update mouse coordinates immediately on click
+      const rect = this.canvas.getBoundingClientRect();
+      const scaleX = this.canvas.width / rect.width;
+      const scaleY = this.canvas.height / rect.height;
+      this.mouse.x = (e.clientX - rect.left) * scaleX;
+      this.mouse.y = (e.clientY - rect.top) * scaleY;
+      
       this.handleMining();
       e.preventDefault(); // Prevent text selection
     });
     
     this.canvas.addEventListener('mouseup', () => {
       this.mouse.down = false;
+    });
+    
+    // Add click event as backup
+    this.canvas.addEventListener('click', (e) => {
+      // Update mouse coordinates immediately on click
+      const rect = this.canvas.getBoundingClientRect();
+      const scaleX = this.canvas.width / rect.width;
+      const scaleY = this.canvas.height / rect.height;
+      this.mouse.x = (e.clientX - rect.left) * scaleX;
+      this.mouse.y = (e.clientY - rect.top) * scaleY;
+      
+      this.handleMining();
+      e.preventDefault();
     });
     
     // Prevent context menu on right click
@@ -173,22 +194,8 @@ export default class GameEngine {
     const gridX = Math.floor(this.mouse.x / this.blockSize);
     const gridY = Math.floor(this.mouse.y / this.blockSize);
     
-    // Debug logging
-    console.log('Mining attempt:', {
-      mouseX: this.mouse.x,
-      mouseY: this.mouse.y,
-      gridX,
-      gridY,
-      blockSize: this.blockSize,
-      playerX: this.player.x,
-      playerY: this.player.y,
-      playerGridX: Math.floor(this.player.x / this.blockSize),
-      playerGridY: Math.floor(this.player.y / this.blockSize)
-    });
-    
     // Проверяем, что клик в пределах сетки
     if (gridX < 0 || gridX >= this.gridWidth || gridY < 0 || gridY >= this.gridHeight) {
-      console.log('Click outside grid bounds');
       return;
     }
     
@@ -196,7 +203,6 @@ export default class GameEngine {
     
     // Check that block is not mined and near player
     if (!block.mined && this.isNearPlayer(gridX, gridY)) {
-      console.log('Mining block at', gridX, gridY);
       block.mined = true;
       
       // Add points depending on block type
@@ -235,17 +241,8 @@ export default class GameEngine {
     const distanceX = Math.abs(gridX - playerGridX);
     const distanceY = Math.abs(gridY - playerGridY);
     
-    const isNear = distanceX <= 1 && distanceY <= 1;
-    
-    console.log('isNearPlayer check:', {
-      targetGrid: [gridX, gridY],
-      playerGrid: [playerGridX, playerGridY],
-      distance: [distanceX, distanceY],
-      isNear
-    });
-    
     // Allow mining blocks that are 1 block away in any direction
-    return isNear;
+    return distanceX <= 1 && distanceY <= 1;
   }
   
   getBlockPoints(type) {
