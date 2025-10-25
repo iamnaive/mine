@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-export default function Leaderboard() {
+export default function Leaderboard({ loadedAssets = {} }) {
   const [leaderboard, setLeaderboard] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -59,46 +59,73 @@ export default function Leaderboard() {
 
       <div className="sort-buttons">
         <button 
-          className={sortType === 'tickets' ? 'sort-btn active' : 'sort-btn'}
+          className={`graphic-btn btn-sort ${sortType === 'tickets' ? 'active' : ''}`}
           onClick={() => setSortType('tickets')}
         >
-          🎫 Tickets
+          <img 
+            src={loadedAssets.ui_tickets?.src || '/images/tickets.png'} 
+            alt="Tickets" 
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+          />
         </button>
         <button 
-          className={sortType === 'points' ? 'sort-btn active' : 'sort-btn'}
+          className={`graphic-btn btn-sort ${sortType === 'points' ? 'active' : ''}`}
           onClick={() => setSortType('points')}
         >
-          💎 Points
+          <img 
+            src={loadedAssets.ui_points?.src || '/images/points.png'} 
+            alt="Points" 
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+          />
         </button>
         <button 
-          className={sortType === 'best_score' ? 'sort-btn active' : 'sort-btn'}
+          className={`graphic-btn btn-sort ${sortType === 'best_score' ? 'active' : ''}`}
           onClick={() => setSortType('best_score')}
         >
-          ⭐ Best Score
+          <img 
+            src={loadedAssets.ui_best?.src || '/images/Best.png'} 
+            alt="Best Score" 
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+          />
         </button>
       </div>
 
       <div className="leaderboard-table">
-        <div className="table-header">
-          <div className="col-rank">Rank</div>
-          <div className="col-address">Address</div>
-          <div className="col-tickets">Tickets</div>
-          <div className="col-points">Points</div>
-          <div className="col-best">Best</div>
-        </div>
+            <div className="table-header">
+              <div className="col-rank">
+                <img 
+                  src={loadedAssets.ui_rank?.src || '/images/rank.png'} 
+                  alt="Rank" 
+                  style={{ width: '20px', height: '20px', objectFit: 'contain' }}
+                />
+              </div>
+              <div className="col-address">Address</div>
+              <div className="col-tickets">Tickets</div>
+              <div className="col-points">Points</div>
+              <div className="col-best">Best</div>
+            </div>
         
         {leaderboard.length === 0 ? (
           <div className="no-data">No players yet. Be the first!</div>
         ) : (
-          leaderboard.map((player, index) => (
-            <div key={player.address} className="table-row">
-              <div className="col-rank">#{index + 1}</div>
-              <div className="col-address">{formatAddress(player.address)}</div>
-              <div className="col-tickets">{player.tickets || 0}</div>
-              <div className="col-points">{player.total_points || 0}</div>
-              <div className="col-best">{player.best_score || 0}</div>
-            </div>
-          ))
+            leaderboard.map((player, index) => (
+              <div key={player.address} className="table-row">
+                <div className="col-rank">
+                  <div className="btn-rank">
+                    <img 
+                      src={loadedAssets.ui_rank?.src || '/images/rank.png'} 
+                      alt="Rank" 
+                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    />
+                    <span style={{ position: 'absolute', zIndex: 1 }}>#{index + 1}</span>
+                  </div>
+                </div>
+                <div className="col-address">{formatAddress(player.address)}</div>
+                <div className="col-tickets">{player.tickets || 0}</div>
+                <div className="col-points">{player.total_points || 0}</div>
+                <div className="col-best">{player.best_score || 0}</div>
+              </div>
+            ))
         )}
       </div>
 

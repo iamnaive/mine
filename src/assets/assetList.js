@@ -48,6 +48,50 @@ export const GAME_ASSETS = [
     priority: 'high'
   },
   
+  // UI Graphics (high priority for immediate display)
+  {
+    name: 'ui_best',
+    src: '/images/Best.png',
+    type: 'ui',
+    priority: 'high'
+  },
+  {
+    name: 'ui_connect',
+    src: '/images/Connect.png',
+    type: 'ui',
+    priority: 'high'
+  },
+  {
+    name: 'ui_howplay',
+    src: '/images/HowPlay.png',
+    type: 'ui',
+    priority: 'high'
+  },
+  {
+    name: 'ui_points',
+    src: '/images/points.png',
+    type: 'ui',
+    priority: 'high'
+  },
+  {
+    name: 'ui_start',
+    src: '/images/start.png',
+    type: 'ui',
+    priority: 'high'
+  },
+  {
+    name: 'ui_tickets',
+    src: '/images/tickets.png',
+    type: 'ui',
+    priority: 'high'
+  },
+  {
+    name: 'ui_rank',
+    src: '/images/rank.png',
+    type: 'ui',
+    priority: 'high'
+  },
+  
   // Background (can load in background)
   {
     name: 'background',

@@ -12,6 +12,10 @@ const LoadingScreen = ({ progress, isLoading, currentAsset }) => {
       return 'Loading pickaxe animations...';
     }
     
+    if (assetName && assetName.startsWith('ui_')) {
+      return 'Loading interface graphics...';
+    }
+    
     switch (assetName) {
       case 'pickaxe':
         return 'Loading mining tools...';

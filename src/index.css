@@ -942,3 +942,81 @@ canvas {
   transform: translateY(0) !important;
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3) !important;
 }
+
+/* Graphic UI Buttons */
+.graphic-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.graphic-btn:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
+.graphic-btn:active {
+  transform: scale(0.95);
+}
+
+.graphic-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.graphic-btn:disabled:hover {
+  transform: none;
+  filter: none;
+}
+
+/* Specific button sizes */
+.btn-start {
+  width: 200px;
+  height: 60px;
+}
+
+.btn-connect {
+  width: 180px;
+  height: 50px;
+}
+
+.btn-help {
+  width: 150px;
+  height: 45px;
+}
+
+.btn-sort {
+  width: 120px;
+  height: 40px;
+}
+
+.btn-refresh {
+  width: 140px;
+  height: 45px;
+}
+
+.btn-rank {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #000;
+  font-size: 14px;
+  position: relative;
+}
+
+/* Active state for graphic buttons */
+.graphic-btn.active {
+  filter: brightness(1.2) saturate(1.3);
+  transform: scale(1.05);
+}
+
+.graphic-btn.active:hover {
+  transform: scale(1.1);
+}

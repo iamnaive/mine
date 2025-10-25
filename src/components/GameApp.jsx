@@ -408,18 +408,30 @@ export default function GameApp() {
           <div className="start-screen">
             <p>Connect your wallet using the button in the top-right corner, then start digging!</p>
             
-            <button 
-              className={`start-btn ${!isConnected ? 'inactive' : ''}`}
-              onClick={isConnected ? startGame : undefined}
-              disabled={isConnected && (chainId !== 10143 || !canClaimToday)}
-            >
-              {isConnected ? 
-                (chainId === 10143 ? 
-                  (canClaimToday ? 'Start Game' : 'Already Played Today') : 
-                  'Switch to Monad Testnet') : 
-                'Connect Wallet First'
-              }
-            </button>
+            {isConnected ? (
+              <button 
+                className={`graphic-btn btn-start ${!canClaimToday || chainId !== 10143 ? 'inactive' : ''}`}
+                onClick={startGame}
+                disabled={chainId !== 10143 || !canClaimToday}
+              >
+                <img 
+                  src={loadedAssets.ui_start?.src || '/images/start.png'} 
+                  alt="Start Game" 
+                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                />
+              </button>
+            ) : (
+              <button 
+                className="graphic-btn btn-connect"
+                onClick={() => {/* Connect wallet handled by RainbowKit */}}
+              >
+                <img 
+                  src={loadedAssets.ui_connect?.src || '/images/Connect.png'} 
+                  alt="Connect Wallet" 
+                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                />
+              </button>
+            )}
             
             {isConnected && !canClaimToday && timeUntilReset && (
               <div className="cooldown-info">
@@ -429,10 +441,14 @@ export default function GameApp() {
             )}
             
             <button 
-              className="help-btn" 
+              className="graphic-btn btn-help"
               onClick={() => setShowInstructions(!showInstructions)}
             >
-              {showInstructions ? 'Hide Instructions' : 'How to Play?'}
+              <img 
+                src={loadedAssets.ui_howplay?.src || '/images/HowPlay.png'} 
+                alt="How to play" 
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              />
             </button>
             
             {showInstructions && (
@@ -451,7 +467,7 @@ export default function GameApp() {
               </div>
             )}
             
-            <Leaderboard />
+            <Leaderboard loadedAssets={loadedAssets} />
           </div>
         );
       }
