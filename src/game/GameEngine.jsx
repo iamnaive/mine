@@ -44,6 +44,7 @@ export default class GameEngine {
     // 2D array of blocks (true = block exists, false = empty)
     this.blocks = [];
     this.particles = [];
+    this.decorations = []; // Halloween decorations array
     this.score = 0;
     this.timeLeft = 180; // 3 minutes
     this.chestFound = false;
@@ -66,6 +67,7 @@ export default class GameEngine {
     this.backgroundImage = this.loadedAssets.background || null;
     
     this.generateWorld();
+    this.generateDecorations();
     this.setupEvents();
     this.gameLoop();
   }
@@ -212,6 +214,23 @@ export default class GameEngine {
       return;
     }
     
+    // First check for decorations at this position
+    const decoration = this.decorations.find(dec => 
+      dec.gridX === gridX && dec.gridY === gridY && !dec.collected
+    );
+    
+    if (decoration) {
+      // Collect decoration
+      decoration.collected = true;
+      this.score += 5; // Bonus points for decorations
+      
+      // Add collection particles
+      this.createParticles(Math.floor(decoration.x / this.blockSize), Math.floor(decoration.y / this.blockSize), 'decoration');
+      
+      console.log(`Collected ${decoration.type} decoration! +5 points`);
+      return;
+    }
+    
     const block = this.blocks[gridY][gridX];
     
     // Check that block is not mined and near player
@@ -314,14 +333,23 @@ export default class GameEngine {
     const x = gridX * this.blockSize + this.blockSize / 2;
     const y = gridY * this.blockSize + this.blockSize / 2;
     
-    for (let i = 0; i < 8; i++) {
+    let particleCount = 8;
+    let particleColor = this.getBlockColor(type);
+    
+    // Special particles for decorations
+    if (type === 'decoration') {
+      particleCount = 12;
+      particleColor = '#9B59B6'; // Purple for decorations
+    }
+    
+    for (let i = 0; i < particleCount; i++) {
       this.particles.push({
         x: x,
         y: y,
         vx: (Math.random() - 0.5) * 6,
         vy: (Math.random() - 0.5) * 6,
         life: 40,
-        color: this.getBlockColor(type)
+        color: particleColor
       });
     }
   }
@@ -460,6 +488,227 @@ export default class GameEngine {
     }
   }
   */
+
+  // Generate Halloween decorations
+  generateDecorations() {
+    this.decorations = [];
+    const decorationTypes = ['web', 'skeleton', 'candle', 'pumpkin', 'bat', 'potion', 'ghost'];
+    
+    for (let y = 0; y < this.gridHeight; y++) {
+      for (let x = 0; x < this.gridWidth; x++) {
+        // 5% chance for decoration on each block
+        if (Math.random() < 0.05) {
+          const decorationType = decorationTypes[Math.floor(Math.random() * decorationTypes.length)];
+          this.decorations.push({
+            x: x * this.blockSize + this.blockSize / 2,
+            y: y * this.blockSize + this.blockSize / 2,
+            type: decorationType,
+            gridX: x,
+            gridY: y,
+            collected: false,
+            animation: 0
+          });
+        }
+      }
+    }
+    
+    console.log(`Generated ${this.decorations.length} Halloween decorations`);
+  }
+
+  // Draw Halloween decorations
+  drawDecorations() {
+    this.decorations.forEach(decoration => {
+      if (decoration.collected) return;
+      
+      const x = decoration.x;
+      const y = decoration.y;
+      const size = 20;
+      
+      // Update animation
+      decoration.animation += 0.1;
+      
+      switch (decoration.type) {
+        case 'web':
+          this.drawWeb(x, y, size);
+          break;
+        case 'skeleton':
+          this.drawSkeleton(x, y, size);
+          break;
+        case 'candle':
+          this.drawCandle(x, y, size);
+          break;
+        case 'pumpkin':
+          this.drawPumpkin(x, y, size);
+          break;
+        case 'bat':
+          this.drawBat(x, y, size, decoration.animation);
+          break;
+        case 'potion':
+          this.drawPotion(x, y, size);
+          break;
+        case 'ghost':
+          this.drawGhost(x, y, size, decoration.animation);
+          break;
+      }
+    });
+  }
+
+  // Draw web decoration
+  drawWeb(x, y, size) {
+    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    this.ctx.lineWidth = 1;
+    
+    // Draw web lines
+    for (let i = 0; i < 8; i++) {
+      const angle = (i * Math.PI * 2) / 8;
+      const endX = x + Math.cos(angle) * size / 2;
+      const endY = y + Math.sin(angle) * size / 2;
+      
+      this.ctx.beginPath();
+      this.ctx.moveTo(x, y);
+      this.ctx.lineTo(endX, endY);
+      this.ctx.stroke();
+    }
+    
+    // Draw spiral
+    this.ctx.beginPath();
+    for (let r = 2; r < size / 2; r += 3) {
+      const angle = r * 0.5;
+      const spiralX = x + Math.cos(angle) * r;
+      const spiralY = y + Math.sin(angle) * r;
+      if (r === 2) {
+        this.ctx.moveTo(spiralX, spiralY);
+      } else {
+        this.ctx.lineTo(spiralX, spiralY);
+      }
+    }
+    this.ctx.stroke();
+  }
+
+  // Draw skeleton decoration
+  drawSkeleton(x, y, size) {
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    
+    // Skull
+    this.ctx.beginPath();
+    this.ctx.arc(x, y - size/4, size/4, 0, Math.PI * 2);
+    this.ctx.fill();
+    
+    // Eye sockets
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    this.ctx.beginPath();
+    this.ctx.arc(x - size/8, y - size/4, size/12, 0, Math.PI * 2);
+    this.ctx.arc(x + size/8, y - size/4, size/12, 0, Math.PI * 2);
+    this.ctx.fill();
+    
+    // Bones
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    this.ctx.fillRect(x - size/6, y, size/3, size/3);
+    this.ctx.fillRect(x - size/8, y + size/3, size/4, size/6);
+  }
+
+  // Draw candle decoration
+  drawCandle(x, y, size) {
+    // Candle body
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    this.ctx.fillRect(x - size/8, y - size/4, size/4, size/2);
+    
+    // Flame
+    const flameSize = size/6 + Math.sin(this.animation * 0.3) * 2;
+    this.ctx.fillStyle = 'rgba(255, 100, 0, 0.8)';
+    this.ctx.beginPath();
+    this.ctx.arc(x, y - size/3, flameSize, 0, Math.PI * 2);
+    this.ctx.fill();
+    
+    // Glow effect
+    this.ctx.shadowColor = 'rgba(255, 100, 0, 0.5)';
+    this.ctx.shadowBlur = 10;
+    this.ctx.beginPath();
+    this.ctx.arc(x, y - size/3, flameSize, 0, Math.PI * 2);
+    this.ctx.fill();
+    this.ctx.shadowBlur = 0;
+  }
+
+  // Draw pumpkin decoration
+  drawPumpkin(x, y, size) {
+    // Pumpkin body
+    this.ctx.fillStyle = 'rgba(255, 165, 0, 0.9)';
+    this.ctx.beginPath();
+    this.ctx.ellipse(x, y, size/3, size/4, 0, 0, Math.PI * 2);
+    this.ctx.fill();
+    
+    // Face
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    // Eyes
+    this.ctx.fillRect(x - size/6, y - size/8, size/12, size/12);
+    this.ctx.fillRect(x + size/12, y - size/8, size/12, size/12);
+    // Mouth
+    this.ctx.fillRect(x - size/8, y + size/8, size/4, size/16);
+  }
+
+  // Draw bat decoration
+  drawBat(x, y, size, animation) {
+    const offsetX = Math.sin(animation) * 3;
+    const offsetY = Math.cos(animation * 0.7) * 2;
+    
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    
+    // Bat body
+    this.ctx.beginPath();
+    this.ctx.ellipse(x + offsetX, y + offsetY, size/6, size/8, 0, 0, Math.PI * 2);
+    this.ctx.fill();
+    
+    // Wings
+    this.ctx.beginPath();
+    this.ctx.ellipse(x + offsetX - size/4, y + offsetY, size/4, size/6, -0.3, 0, Math.PI * 2);
+    this.ctx.ellipse(x + offsetX + size/4, y + offsetY, size/4, size/6, 0.3, 0, Math.PI * 2);
+    this.ctx.fill();
+  }
+
+  // Draw potion decoration
+  drawPotion(x, y, size) {
+    // Bottle
+    this.ctx.fillStyle = 'rgba(100, 50, 200, 0.8)';
+    this.ctx.fillRect(x - size/6, y - size/4, size/3, size/2);
+    
+    // Liquid
+    this.ctx.fillStyle = 'rgba(255, 0, 255, 0.6)';
+    this.ctx.fillRect(x - size/8, y - size/6, size/4, size/3);
+    
+    // Cork
+    this.ctx.fillStyle = 'rgba(139, 69, 19, 0.9)';
+    this.ctx.fillRect(x - size/8, y - size/3, size/4, size/8);
+  }
+
+  // Draw ghost decoration
+  drawGhost(x, y, size, animation) {
+    const floatY = y + Math.sin(animation * 0.5) * 3;
+    
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    
+    // Ghost body
+    this.ctx.beginPath();
+    this.ctx.ellipse(x, floatY, size/3, size/4, 0, 0, Math.PI * 2);
+    this.ctx.fill();
+    
+    // Wavy bottom
+    this.ctx.beginPath();
+    this.ctx.moveTo(x - size/3, floatY + size/4);
+    for (let i = 0; i < 5; i++) {
+      const waveX = x - size/3 + (i * size/6);
+      const waveY = floatY + size/4 + Math.sin(animation + i) * 3;
+      this.ctx.lineTo(waveX, waveY);
+    }
+    this.ctx.lineTo(x + size/3, floatY + size/4);
+    this.ctx.fill();
+    
+    // Eyes
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    this.ctx.beginPath();
+    this.ctx.arc(x - size/8, floatY - size/8, size/16, 0, Math.PI * 2);
+    this.ctx.arc(x + size/8, floatY - size/8, size/16, 0, Math.PI * 2);
+    this.ctx.fill();
+  }
   
   
   updateCamera() {
@@ -480,7 +729,7 @@ export default class GameEngine {
     this.camera.x = Math.max(minCameraX, Math.min(maxCameraX, this.camera.x));
     this.camera.y = Math.max(minCameraY, Math.min(maxCameraY, this.camera.y));
   }
-
+  
   update() {
     // Update camera first
     this.updateCamera();
@@ -557,11 +806,12 @@ export default class GameEngine {
       this.chestFound = false;
       this.chest = null; // Reset chest
       this.generateWorld(); // Regenerate world
+      this.generateDecorations(); // Regenerate decorations
       this.particles = [];
     }
   }
   
-
+  
   checkBlockCollisions(oldX, oldY) {
     const playerLeft = this.player.x - this.playerSize/2;
     const playerRight = this.player.x + this.playerSize/2;
@@ -675,6 +925,9 @@ export default class GameEngine {
         }
       }
     }
+    
+    // Draw Halloween decorations
+    this.drawDecorations();
     
     // Draw chest if exists
     if (this.chest) {
