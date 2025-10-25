@@ -177,6 +177,36 @@ canvas {
   box-shadow: none;
 }
 
+.start-btn.inactive {
+  background: linear-gradient(135deg, #4b5563, #6b7280);
+  color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: none;
+  position: relative;
+}
+
+.start-btn.inactive::after {
+  content: '👆 Connect wallet first';
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.start-btn.inactive:hover::after {
+  opacity: 1;
+}
+
 .start-btn:hover:not(:disabled) {
   background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
   transform: translateY(-3px) scale(1.02);

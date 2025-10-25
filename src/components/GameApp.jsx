@@ -406,18 +406,18 @@ export default function GameApp() {
       if (gameState === 'start') {
         return (
           <div className="start-screen">
-            <p>Connect your wallet and start digging!</p>
+            <p>Connect your wallet using the button in the top-right corner, then start digging!</p>
             
             <button 
-              className="start-btn" 
-              onClick={startGame}
+              className={`start-btn ${!isConnected ? 'inactive' : ''}`}
+              onClick={isConnected ? startGame : undefined}
               disabled={isConnected && (chainId !== 10143 || !canClaimToday)}
             >
               {isConnected ? 
                 (chainId === 10143 ? 
                   (canClaimToday ? 'Start Game' : 'Already Played Today') : 
                   'Switch to Monad Testnet') : 
-                'Connect Wallet'
+                'Connect Wallet First'
               }
             </button>
             
