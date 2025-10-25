@@ -335,6 +335,128 @@ export default class GameEngine {
       default: return '#6B7280';
     }
   }
+
+  // Check if a block has neighbors in specific directions
+  hasNeighbor(x, y, direction) {
+    let checkX = x;
+    let checkY = y;
+    
+    switch (direction) {
+      case 'top':
+        checkY = y - 1;
+        break;
+      case 'right':
+        checkX = x + 1;
+        break;
+      case 'bottom':
+        checkY = y + 1;
+        break;
+      case 'left':
+        checkX = x - 1;
+        break;
+    }
+    
+    // Check bounds
+    if (checkX < 0 || checkX >= this.gridWidth || checkY < 0 || checkY >= this.gridHeight) {
+      return false; // No neighbor (edge of world)
+    }
+    
+    const neighbor = this.blocks[checkY][checkX];
+    return neighbor && !neighbor.mined;
+  }
+
+  // Get the appropriate tile variant based on neighbors
+  getTileVariant(x, y, blockType) {
+    if (blockType !== 'stone') {
+      return blockType; // Special blocks don't have variants
+    }
+    
+    const hasTop = this.hasNeighbor(x, y, 'top');
+    const hasRight = this.hasNeighbor(x, y, 'right');
+    const hasBottom = this.hasNeighbor(x, y, 'bottom');
+    const hasLeft = this.hasNeighbor(x, y, 'left');
+    
+    // Count open sides
+    const openSides = [hasTop, hasRight, hasBottom, hasLeft].filter(has => !has).length;
+    
+    // If completely surrounded, use normal tile
+    if (openSides === 0) {
+      return 'stone';
+    }
+    
+    // If has only one open side, use border tile for that side
+    if (openSides === 1) {
+      if (!hasTop) return 'stone_border_top';
+      if (!hasRight) return 'stone_border_right';
+      if (!hasBottom) return 'stone_border_bottom';
+      if (!hasLeft) return 'stone_border_left';
+    }
+    
+    // For multiple open sides, use normal tile (could be enhanced later)
+    return 'stone';
+  }
+
+  // Draw border effect for different tile variants
+  drawBorderEffect(blockX, blockY, tileVariant) {
+    this.ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+    this.ctx.lineWidth = 1;
+    
+    // Draw different border effects based on variant
+    switch (tileVariant) {
+      case 'stone_border_top':
+        // Highlight top edge as floor
+        this.ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        this.ctx.fillRect(blockX, blockY, this.blockSize, 4);
+        this.ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(blockX, blockY);
+        this.ctx.lineTo(blockX + this.blockSize, blockY);
+        this.ctx.stroke();
+        break;
+        
+      case 'stone_border_right':
+        // Highlight right edge
+        this.ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        this.ctx.fillRect(blockX + this.blockSize - 4, blockY, 4, this.blockSize);
+        this.ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(blockX + this.blockSize, blockY);
+        this.ctx.lineTo(blockX + this.blockSize, blockY + this.blockSize);
+        this.ctx.stroke();
+        break;
+        
+      case 'stone_border_bottom':
+        // Highlight bottom edge
+        this.ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        this.ctx.fillRect(blockX, blockY + this.blockSize - 4, this.blockSize, 4);
+        this.ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(blockX, blockY + this.blockSize);
+        this.ctx.lineTo(blockX + this.blockSize, blockY + this.blockSize);
+        this.ctx.stroke();
+        break;
+        
+      case 'stone_border_left':
+        // Highlight left edge
+        this.ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        this.ctx.fillRect(blockX, blockY, 4, this.blockSize);
+        this.ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(blockX, blockY);
+        this.ctx.lineTo(blockX, blockY + this.blockSize);
+        this.ctx.stroke();
+        break;
+        
+      default:
+        // Normal block - just draw regular border
+        this.ctx.strokeRect(blockX, blockY, this.blockSize, this.blockSize);
+        break;
+    }
+  }
   
   
   updateCamera() {
@@ -528,19 +650,23 @@ export default class GameEngine {
           const blockX = x * this.blockSize;
           const blockY = y * this.blockSize;
           
-          // Draw block image if available, otherwise fallback to color
+          // Get the appropriate tile variant based on neighbors
+          const tileVariant = this.getTileVariant(x, y, block.type);
+          
+          // Always use the base block image for now (until we have border tiles)
           const blockImage = this.blockImages[block.type];
           if (blockImage && blockImage.complete && blockImage.naturalWidth > 0) {
             this.ctx.drawImage(blockImage, blockX, blockY, this.blockSize, this.blockSize);
+            
+            // Add border effect on top of the image
+            this.drawBorderEffect(blockX, blockY, tileVariant);
           } else {
-            // Fallback to colored rectangle
+            // Fallback to colored rectangle with border effect
             this.ctx.fillStyle = this.getBlockColor(block.type);
             this.ctx.fillRect(blockX, blockY, this.blockSize, this.blockSize);
             
-            // Block border
-            this.ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-            this.ctx.lineWidth = 1;
-            this.ctx.strokeRect(blockX, blockY, this.blockSize, this.blockSize);
+            // Add border effect based on tile variant
+            this.drawBorderEffect(blockX, blockY, tileVariant);
             
             // Block texture (простая текстура)
             this.ctx.fillStyle = 'rgba(255,255,255,0.1)';

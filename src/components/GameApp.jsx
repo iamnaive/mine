@@ -24,7 +24,7 @@ export default function GameApp() {
   const [currentYmd, setCurrentYmd] = useState(null);
   
   // Asset loading
-  const { isLoading: assetsLoading, progress: assetsProgress, loadedAssets, loadAssets } = useAssetLoader();
+  const { isLoading: assetsLoading, progress: assetsProgress, loadedAssets, currentAsset, loadAssets } = useAssetLoader();
 
   // Helper function for signing with wagmi or fallback
   const signWithWagmiOrFallback = useCallback(async (address, message) => {
@@ -477,7 +477,7 @@ export default function GameApp() {
 
   return (
     <div className="game-screen">
-      <LoadingScreen progress={assetsProgress} isLoading={assetsLoading} />
+      <LoadingScreen progress={assetsProgress} isLoading={assetsLoading} currentAsset={currentAsset} />
       
       <div className="kv">
         <div>Address</div>

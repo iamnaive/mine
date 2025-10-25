@@ -154,6 +154,8 @@ canvas {
   box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
   position: relative;
   overflow: hidden;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .start-btn::before {
@@ -238,6 +240,8 @@ canvas {
   font-family: inherit;
   backdrop-filter: blur(10px);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  white-space: nowrap;
 }
 
 .help-btn:hover {
@@ -724,6 +728,53 @@ canvas {
   }
 }
 
+/* RainbowKit Modal Dark Background */
+[data-rk] [role="dialog"] {
+  background: rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+[data-rk] [role="dialog"] > div {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-rk] [role="dialog"] * {
+  color: #ffffff !important;
+}
+
+/* Alternative selectors for RainbowKit modal */
+[data-rk] .rk-modal {
+  background: rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+[data-rk] .rk-modal-content {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-rk] .rk-modal-content * {
+  color: #ffffff !important;
+}
+
+/* Generic modal overlay selectors */
+[data-rk] [class*="modal"] {
+  background: rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+[data-rk] [class*="modal"] [class*="content"] {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
+}
+
 /* RainbowKit styles are handled by the library */
 
 /* Lottery styles */
@@ -878,6 +929,11 @@ canvas {
   box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4) !important;
   outline: none !important;
   backdrop-filter: blur(10px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  min-height: 52px !important;
 }
 
 [data-rk] button:hover {
