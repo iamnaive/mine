@@ -47,12 +47,12 @@ export default class GameEngine {
       // Pickaxe properties
       pickaxe: {
         isSwinging: false,
-        swingAngle: 0, // Current angle of swing (0 to Math.PI)
+        swingAngle: 0, // Current angle of swing (0 to Math.PI/3)
         swingSpeed: 0.3, // How fast the swing animation goes
         swingDirection: 1, // 1 for right swing, -1 for left swing
         offsetX: 0, // X offset from player center
         offsetY: 0, // Y offset from player center
-        size: 30 // Size of pickaxe
+        size: 60 // Size of pickaxe (doubled)
       }
     };
     
@@ -768,21 +768,27 @@ export default class GameEngine {
     
     if (pickaxe.isSwinging) {
       // Update swing angle
-      pickaxe.swingAngle += pickaxe.swingSpeed * pickaxe.swingDirection;
+      pickaxe.swingAngle += pickaxe.swingSpeed;
       
-      // Check if swing is complete
-      if (pickaxe.swingAngle >= Math.PI || pickaxe.swingAngle <= 0) {
+      // Check if swing is complete (reduced arc: Math.PI/3 instead of Math.PI)
+      if (pickaxe.swingAngle >= Math.PI/3) {
         pickaxe.isSwinging = false;
         pickaxe.swingAngle = 0;
       }
     }
     
     // Calculate pickaxe position based on swing angle and player facing
-    const baseAngle = this.player.facing === 'right' ? 0 : Math.PI;
+    let baseAngle;
+    if (this.player.facing === 'right') {
+      baseAngle = -Math.PI/6; // Start from -30 degrees for right
+    } else {
+      baseAngle = Math.PI + Math.PI/6; // Start from 210 degrees for left (flipped)
+    }
+    
     const totalAngle = baseAngle + pickaxe.swingAngle * pickaxe.swingDirection;
     
     // Position pickaxe relative to player
-    const distance = 25; // Distance from player center
+    const distance = 30; // Slightly increased distance
     pickaxe.offsetX = Math.cos(totalAngle) * distance;
     pickaxe.offsetY = Math.sin(totalAngle) * distance;
   }
@@ -793,7 +799,8 @@ export default class GameEngine {
     if (!pickaxe.isSwinging) {
       pickaxe.isSwinging = true;
       pickaxe.swingAngle = 0;
-      pickaxe.swingDirection = this.player.facing === 'right' ? 1 : -1;
+      // Always swing in positive direction, base angle handles the direction
+      pickaxe.swingDirection = 1;
     }
   }
 
@@ -807,15 +814,20 @@ export default class GameEngine {
       const pickaxeX = this.player.x + pickaxe.offsetX;
       const pickaxeY = this.player.y + pickaxe.offsetY;
       
-      // Save context for rotation
+      // Save context for rotation and scaling
       this.ctx.save();
       
       // Move to pickaxe position
       this.ctx.translate(pickaxeX, pickaxeY);
       
-      // Rotate based on swing angle and direction
-      const rotationAngle = pickaxe.swingAngle * pickaxe.swingDirection;
+      // Rotate based on swing angle
+      const rotationAngle = pickaxe.swingAngle;
       this.ctx.rotate(rotationAngle);
+      
+      // Flip horizontally for left direction
+      if (this.player.facing === 'left') {
+        this.ctx.scale(-1, 1);
+      }
       
       // Draw pickaxe (centered on rotation point)
       this.ctx.drawImage(
@@ -836,8 +848,13 @@ export default class GameEngine {
       this.ctx.save();
       this.ctx.translate(pickaxeX, pickaxeY);
       
-      const rotationAngle = pickaxe.swingAngle * pickaxe.swingDirection;
+      const rotationAngle = pickaxe.swingAngle;
       this.ctx.rotate(rotationAngle);
+      
+      // Flip horizontally for left direction
+      if (this.player.facing === 'left') {
+        this.ctx.scale(-1, 1);
+      }
       
       // Draw simple pickaxe
       this.ctx.fillStyle = '#8B4513'; // Brown handle
