@@ -1,7 +1,13 @@
 html, body, #root {
   height: 100%;
   margin: 0;
-  background: linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #000000 100%);
+  background: 
+    linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(10, 10, 10, 0.8) 50%, rgba(0, 0, 0, 0.7) 100%),
+    url('/images/web_bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   color: #ffffff;
   font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
   font-weight: 400;
@@ -17,10 +23,10 @@ html::before, body::before, #root::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(circle at 20% 80%, rgba(80, 80, 120, 0.05) 0%, transparent 50%),
-              radial-gradient(circle at 80% 20%, rgba(120, 80, 120, 0.05) 0%, transparent 50%);
+  background: radial-gradient(circle at 20% 80%, rgba(80, 80, 120, 0.03) 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(120, 80, 120, 0.03) 0%, transparent 50%);
   pointer-events: none;
-  z-index: -1;
+  z-index: 1;
 }
 
 .container {
@@ -28,6 +34,8 @@ html::before, body::before, #root::before {
   margin: 0;
   padding: 0;
   width: 100%;
+  position: relative;
+  z-index: 2;
 }
 
 .header {
