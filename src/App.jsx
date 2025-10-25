@@ -31,7 +31,7 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider 
           theme={darkTheme({
-            accentColor: '#667eea',
+            accentColor: '#9B59B6', // Purple accent like in the image
             accentColorForeground: 'white',
             borderRadius: 'large',
             fontStack: 'system',

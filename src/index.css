@@ -717,7 +717,51 @@ canvas {
   }
 }
 
-/* RainbowKit is now using proper darkTheme - no custom overrides needed */
+/* RainbowKit Dark Purple Theme Customization */
+/* Override RainbowKit styles to match the dark purple design */
+[data-rk] [role="dialog"] {
+  background: rgba(26, 22, 37, 0.95) !important; /* Dark purple background like #1A1625 */
+  backdrop-filter: blur(10px) !important;
+}
+
+[data-rk] [role="dialog"] > div {
+  background: linear-gradient(135deg, #282438 0%, #302C40 100%) !important; /* Wallet card background */
+  border: 1px solid rgba(155, 89, 182, 0.2) !important; /* Purple border */
+  border-radius: 16px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Wallet buttons styling */
+[data-rk] button[class*="rk-"] {
+  background: rgba(40, 36, 56, 0.8) !important; /* Dark purple card background */
+  border: 1px solid rgba(155, 89, 182, 0.1) !important;
+  border-radius: 12px !important;
+  color: #ffffff !important;
+  transition: all 0.3s ease !important;
+}
+
+[data-rk] button[class*="rk-"]:hover {
+  background: rgba(48, 44, 64, 0.9) !important; /* Slightly lighter on hover */
+  border-color: rgba(155, 89, 182, 0.3) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(155, 89, 182, 0.2) !important;
+}
+
+/* Text styling */
+[data-rk] h1, [data-rk] h2, [data-rk] h3, [data-rk] h4, [data-rk] h5, [data-rk] h6,
+[data-rk] p, [data-rk] span, [data-rk] div {
+  color: #ffffff !important;
+}
+
+/* Accent elements */
+[data-rk] [class*="accent"] {
+  color: #9B59B6 !important; /* Purple accent */
+}
+
+/* Status indicators */
+[data-rk] [class*="status"] {
+  color: #4A90E2 !important; /* Blue for installed status */
+}
 
 /* RainbowKit styles are handled by the library */
 
