@@ -476,7 +476,7 @@ export default function GameApp() {
       }
 
   return (
-    <>
+    <div className="game-screen">
       <LoadingScreen progress={assetsProgress} isLoading={assetsLoading} />
       
       <div className="kv">
@@ -518,6 +518,6 @@ export default function GameApp() {
           </button>
         </div>
       </div>
-    </>
+    </div>
   );
 }
