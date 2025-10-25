@@ -813,6 +813,46 @@ div[style*="position: fixed"][style*="z-index"] * {
   color: #ffffff !important;
 }
 
+/* Nuclear option - target ALL possible modal elements */
+div[style*="background-color: white"],
+div[style*="background-color: #fff"],
+div[style*="background-color: #ffffff"],
+div[style*="background: white"],
+div[style*="background: #fff"],
+div[style*="background: #ffffff"],
+div[style*="background: rgb(255, 255, 255)"],
+div[style*="background: rgba(255, 255, 255"] {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
+  color: #ffffff !important;
+}
+
+/* Target any element with white background in modal context */
+[data-rk] div[style*="background"],
+[data-rk] div[style*="background-color"] {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
+  color: #ffffff !important;
+}
+
+/* Force override for any white backgrounds */
+*[style*="background-color: white"],
+*[style*="background-color: #fff"],
+*[style*="background-color: #ffffff"],
+*[style*="background: white"],
+*[style*="background: #fff"],
+*[style*="background: #ffffff"] {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
+  color: #ffffff !important;
+}
+
+/* Target specific RainbowKit elements that might have white backgrounds */
+[data-rk] div[class*="rk-"],
+[data-rk] div[class*="rainbow"],
+[data-rk] div[class*="wallet"],
+[data-rk] div[class*="connect"] {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
+  color: #ffffff !important;
+}
+
 /* RainbowKit styles are handled by the library */
 
 /* Lottery styles */
