@@ -498,11 +498,12 @@ export default function GameApp() {
           width={1600} 
           height={1200}
           style={{ 
-            width: '1600px', 
-            height: '1200px',
-            maxWidth: '100%',
-            maxHeight: 'calc(100vh - 200px)',
-            imageRendering: 'pixelated'
+            width: '100%',
+            height: 'auto',
+            maxWidth: '1600px',
+            maxHeight: '1200px',
+            imageRendering: 'pixelated',
+            display: 'block'
           }}
         />
         
