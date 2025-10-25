@@ -62,9 +62,8 @@ export default class GameEngine {
       followSpeed: 0.1 // How fast camera follows player (0.1 = smooth, 1.0 = instant)
     };
     
-    // Background image
-    this.backgroundImage = new Image();
-    this.backgroundImage.src = '/images/mine_bg.png';
+    // Background image (will be loaded from assets)
+    this.backgroundImage = this.loadedAssets.background || null;
     
     this.generateWorld();
     this.setupEvents();
@@ -513,7 +512,7 @@ export default class GameEngine {
     this.ctx.translate(-this.camera.x, -this.camera.y);
     
     // Draw background image
-    if (this.backgroundImage.complete && this.backgroundImage.naturalWidth > 0) {
+    if (this.backgroundImage && this.backgroundImage.complete && this.backgroundImage.naturalWidth > 0) {
       // Tile the background image to cover the entire world
       const bgWidth = this.backgroundImage.naturalWidth;
       const bgHeight = this.backgroundImage.naturalHeight;
