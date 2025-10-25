@@ -336,6 +336,8 @@ export default class GameEngine {
     }
   }
 
+  // Tile system methods commented out - will be replaced with custom sprites
+  /*
   // Check if a block has neighbors in specific directions
   hasNeighbor(x, y, direction) {
     let checkX = x;
@@ -457,6 +459,7 @@ export default class GameEngine {
         break;
     }
   }
+  */
   
   
   updateCamera() {
@@ -650,23 +653,19 @@ export default class GameEngine {
           const blockX = x * this.blockSize;
           const blockY = y * this.blockSize;
           
-          // Get the appropriate tile variant based on neighbors
-          const tileVariant = this.getTileVariant(x, y, block.type);
-          
-          // Always use the base block image for now (until we have border tiles)
+          // Draw block image if available, otherwise fallback to color
           const blockImage = this.blockImages[block.type];
           if (blockImage && blockImage.complete && blockImage.naturalWidth > 0) {
             this.ctx.drawImage(blockImage, blockX, blockY, this.blockSize, this.blockSize);
-            
-            // Add border effect on top of the image
-            this.drawBorderEffect(blockX, blockY, tileVariant);
           } else {
-            // Fallback to colored rectangle with border effect
+            // Fallback to colored rectangle
             this.ctx.fillStyle = this.getBlockColor(block.type);
             this.ctx.fillRect(blockX, blockY, this.blockSize, this.blockSize);
             
-            // Add border effect based on tile variant
-            this.drawBorderEffect(blockX, blockY, tileVariant);
+            // Block border
+            this.ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+            this.ctx.lineWidth = 1;
+            this.ctx.strokeRect(blockX, blockY, this.blockSize, this.blockSize);
             
             // Block texture (простая текстура)
             this.ctx.fillStyle = 'rgba(255,255,255,0.1)';
