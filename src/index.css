@@ -463,6 +463,120 @@ canvas {
   }
 }
 
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  /* Reduce button sizes on mobile */
+  .btn-sort {
+    width: 120px;
+    height: 40px;
+  }
+  
+  .header-connect-btn {
+    width: 160px;
+    height: 45px;
+  }
+  
+  .btn-start {
+    width: 150px;
+    height: 45px;
+  }
+  
+  .btn-help {
+    width: 120px;
+    height: 35px;
+    margin-top: 15px;
+  }
+  
+  /* Adjust leaderboard container for mobile */
+  .leaderboard-container {
+    padding: 16px;
+    margin: 16px auto;
+  }
+  
+  /* Stack sort buttons vertically on mobile */
+  .sort-buttons {
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+  }
+  
+  /* Adjust table layout for mobile */
+  .table-header,
+  .table-row {
+    grid-template-columns: 50px 1fr 60px 60px 60px;
+    gap: 8px;
+    padding: 12px 8px;
+  }
+  
+  /* Smaller font sizes on mobile */
+  .col-address {
+    font-size: 12px;
+  }
+  
+  .col-tickets,
+  .col-points,
+  .col-best {
+    font-size: 12px;
+  }
+  
+  .btn-rank {
+    width: 25px;
+    height: 25px;
+    font-size: 12px;
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+  .btn-sort {
+    width: 100px;
+    height: 35px;
+  }
+  
+  .header-connect-btn {
+    width: 140px;
+    height: 40px;
+  }
+  
+  .btn-start {
+    width: 130px;
+    height: 40px;
+  }
+  
+  .btn-help {
+    width: 100px;
+    height: 30px;
+  }
+  
+  .leaderboard-container {
+    padding: 12px;
+    margin: 12px auto;
+  }
+  
+  .table-header,
+  .table-row {
+    grid-template-columns: 40px 1fr 50px 50px 50px;
+    gap: 6px;
+    padding: 8px 6px;
+  }
+  
+  .col-address {
+    font-size: 10px;
+  }
+  
+  .col-tickets,
+  .col-points,
+  .col-best {
+    font-size: 10px;
+  }
+  
+  .btn-rank {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+  }
+}
+
 /* RainbowKit styles are handled by the library - no custom overrides needed */
 
 /* Lottery styles */
