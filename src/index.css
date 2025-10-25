@@ -728,51 +728,89 @@ canvas {
   }
 }
 
-/* RainbowKit Modal Dark Background */
-[data-rk] [role="dialog"] {
+/* RainbowKit Modal Dark Background - Aggressive Override */
+/* Target all possible modal overlays */
+[data-rk] [role="dialog"],
+[data-rk] [class*="modal"],
+[data-rk] [class*="overlay"],
+[data-rk] [class*="backdrop"],
+[data-rk] div[style*="position: fixed"],
+[data-rk] div[style*="z-index"] {
   background: rgba(0, 0, 0, 0.8) !important;
   backdrop-filter: blur(10px) !important;
 }
 
-[data-rk] [role="dialog"] > div {
+/* Target all possible modal content containers */
+[data-rk] [role="dialog"] > div,
+[data-rk] [class*="modal"] > div,
+[data-rk] [class*="content"],
+[data-rk] [class*="container"],
+[data-rk] div[style*="background"] {
   background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 16px !important;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
 }
 
-[data-rk] [role="dialog"] * {
+/* Force white text on all modal content */
+[data-rk] [role="dialog"] *,
+[data-rk] [class*="modal"] *,
+[data-rk] [class*="content"] *,
+[data-rk] h1, [data-rk] h2, [data-rk] h3, [data-rk] h4, [data-rk] h5, [data-rk] h6,
+[data-rk] p, [data-rk] span, [data-rk] div, [data-rk] button {
   color: #ffffff !important;
 }
 
-/* Alternative selectors for RainbowKit modal */
-[data-rk] .rk-modal {
+/* Specific RainbowKit class selectors */
+[data-rk] .rk-modal,
+[data-rk] .rk-modal-overlay,
+[data-rk] .rk-modal-content,
+[data-rk] .rk-modal-container {
   background: rgba(0, 0, 0, 0.8) !important;
   backdrop-filter: blur(10px) !important;
 }
 
-[data-rk] .rk-modal-content {
+[data-rk] .rk-modal-content,
+[data-rk] .rk-modal-container > div {
   background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 16px !important;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
 }
 
-[data-rk] .rk-modal-content * {
+/* Nuclear option - target any div with high z-index */
+[data-rk] div[style*="z-index: 999"],
+[data-rk] div[style*="z-index: 1000"],
+[data-rk] div[style*="z-index: 9999"] {
+  background: rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+[data-rk] div[style*="z-index: 999"] > div,
+[data-rk] div[style*="z-index: 1000"] > div,
+[data-rk] div[style*="z-index: 9999"] > div {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Global Modal Dark Theme Override */
+/* This will catch any modal that RainbowKit creates */
+div[style*="position: fixed"][style*="z-index"] {
+  background: rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+div[style*="position: fixed"][style*="z-index"] > div {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
+}
+
+div[style*="position: fixed"][style*="z-index"] * {
   color: #ffffff !important;
-}
-
-/* Generic modal overlay selectors */
-[data-rk] [class*="modal"] {
-  background: rgba(0, 0, 0, 0.8) !important;
-  backdrop-filter: blur(10px) !important;
-}
-
-[data-rk] [class*="modal"] [class*="content"] {
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 16px !important;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
 }
 
 /* RainbowKit styles are handled by the library */
