@@ -6,7 +6,7 @@ import GameEngine from "../game/GameEngine";
 import Leaderboard from "./Leaderboard";
 import LoadingScreen from "./LoadingScreen";
 import { useAssetLoader } from "../hooks/useAssetLoader";
-import { GAME_ASSETS } from "../assets/assetList";
+import { GAME_ASSETS, ANIMATION_ASSETS } from "../assets/assetList";
 
 export default function GameApp() {
   const cvsRef = useRef(null);
@@ -24,7 +24,7 @@ export default function GameApp() {
   const [currentYmd, setCurrentYmd] = useState(null);
   
   // Asset loading
-  const { isLoading: assetsLoading, progress: assetsProgress, loadedAssets, currentAsset, loadAssets } = useAssetLoader();
+  const { isLoading: assetsLoading, progress: assetsProgress, loadedAssets, currentAsset, isEssentialLoaded, loadAssets } = useAssetLoader();
 
   // Helper function for signing with wagmi or fallback
   const signWithWagmiOrFallback = useCallback(async (address, message) => {
@@ -109,13 +109,13 @@ export default function GameApp() {
 
   // Handle transition from loading to playing when assets are loaded
   useEffect(() => {
-    if (gameState === 'loading' && !assetsLoading && Object.keys(loadedAssets).length > 0) {
+    if (gameState === 'loading' && isEssentialLoaded) {
       setGameState('playing');
     }
-  }, [gameState, assetsLoading, loadedAssets]);
+  }, [gameState, isEssentialLoaded]);
 
   useEffect(() => {
-    if (!cvsRef.current || gameState !== 'playing') return;
+    if (!cvsRef.current || gameState !== 'playing' || !isEssentialLoaded) return;
     
     const engine = new GameEngine(cvsRef.current, {
       onRunEnd: async (runScore) => {
@@ -304,7 +304,7 @@ export default function GameApp() {
     
     // Start loading assets
     setGameState('loading');
-    loadAssets(GAME_ASSETS);
+    loadAssets(GAME_ASSETS, ANIMATION_ASSETS);
   };
 
   const resetGame = () => {
