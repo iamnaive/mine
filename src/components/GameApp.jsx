@@ -45,21 +45,15 @@ export default function GameApp() {
   const [showInstructions, setShowInstructions] = useState(false);
   const [timeUntilReset, setTimeUntilReset] = useState(null);
 
-  // Load current date from server
+  // Get current date on client side
   useEffect(() => {
-    const fetchCurrentDate = async () => {
-      try {
-        const response = await fetch('/api/date');
-        const data = await response.json();
-        if (data.success) {
-          setCurrentYmd(data.ymd);
-        }
-      } catch (error) {
-        console.error('Failed to fetch current date:', error);
-      }
+    const getCurrentDate = () => {
+      const now = new Date();
+      const ymd = now.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+      setCurrentYmd(ymd);
     };
     
-    fetchCurrentDate();
+    getCurrentDate();
   }, []);
 
   // Check if user can play today and load player stats
