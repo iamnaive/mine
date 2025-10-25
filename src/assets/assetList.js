@@ -97,7 +97,80 @@ export const GAME_ASSETS = [
     type: 'player',
     priority: 'high'
   },
-  // Pickaxe
+  // Pickaxe animations (highest priority)
+  {
+    name: 'pickaxe_left_0',
+    src: '/images/pickaxe_l/Pickaxe_l_00000.png',
+    type: 'tool',
+    priority: 'high'
+  },
+  {
+    name: 'pickaxe_left_1',
+    src: '/images/pickaxe_l/Pickaxe_l_00001.png',
+    type: 'tool',
+    priority: 'high'
+  },
+  {
+    name: 'pickaxe_left_2',
+    src: '/images/pickaxe_l/Pickaxe_l_00002.png',
+    type: 'tool',
+    priority: 'high'
+  },
+  {
+    name: 'pickaxe_left_3',
+    src: '/images/pickaxe_l/Pickaxe_l_00003.png',
+    type: 'tool',
+    priority: 'high'
+  },
+  {
+    name: 'pickaxe_left_4',
+    src: '/images/pickaxe_l/Pickaxe_l_00004.png',
+    type: 'tool',
+    priority: 'high'
+  },
+  {
+    name: 'pickaxe_left_5',
+    src: '/images/pickaxe_l/Pickaxe_l_00005.png',
+    type: 'tool',
+    priority: 'high'
+  },
+  {
+    name: 'pickaxe_right_0',
+    src: '/images/pickaxe_r/Pickaxe_r_00000.png',
+    type: 'tool',
+    priority: 'high'
+  },
+  {
+    name: 'pickaxe_right_1',
+    src: '/images/pickaxe_r/Pickaxe_r_00001.png',
+    type: 'tool',
+    priority: 'high'
+  },
+  {
+    name: 'pickaxe_right_2',
+    src: '/images/pickaxe_r/Pickaxe_r_00002.png',
+    type: 'tool',
+    priority: 'high'
+  },
+  {
+    name: 'pickaxe_right_3',
+    src: '/images/pickaxe_r/Pickaxe_r_00003.png',
+    type: 'tool',
+    priority: 'high'
+  },
+  {
+    name: 'pickaxe_right_4',
+    src: '/images/pickaxe_r/Pickaxe_r_00004.png',
+    type: 'tool',
+    priority: 'high'
+  },
+  {
+    name: 'pickaxe_right_5',
+    src: '/images/pickaxe_r/Pickaxe_r_00005.png',
+    type: 'tool',
+    priority: 'high'
+  },
+  // Static pickaxe (fallback)
   {
     name: 'pickaxe',
     src: '/images/pickaxe.png',

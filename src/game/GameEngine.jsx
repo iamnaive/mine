@@ -47,7 +47,11 @@ export default class GameEngine {
       // Pickaxe properties
       pickaxe: {
         facing: 'right', // 'left' or 'right' - matches player facing
-        size: 40 // Size of pickaxe
+        size: 40, // Size of pickaxe
+        isAnimating: false, // Is pickaxe animation playing
+        animationFrame: 0, // Current frame (0-5)
+        animationTimer: 0, // Timer for frame changes
+        animationSpeed: 3 // Frames per animation frame (adjust speed)
       }
     };
     
@@ -168,6 +172,7 @@ export default class GameEngine {
       this.mouse.x = (e.clientX - rect.left) * scaleX + this.camera.x;
       this.mouse.y = (e.clientY - rect.top) * scaleY + this.camera.y;
       
+      this.startPickaxeAnimation(); // Start pickaxe animation
       this.handleMining();
       e.preventDefault(); // Prevent text selection
     });
@@ -186,6 +191,7 @@ export default class GameEngine {
       this.mouse.x = (e.clientX - rect.left) * scaleX + this.camera.x;
       this.mouse.y = (e.clientY - rect.top) * scaleY + this.camera.y;
       
+      this.startPickaxeAnimation(); // Start pickaxe animation
       this.handleMining();
       e.preventDefault();
     });
@@ -755,16 +761,53 @@ export default class GameEngine {
     return this.loadedAssets[spriteName] || null;
   }
 
-  // Update pickaxe facing direction
-  updatePickaxeFacing() {
+  // Update pickaxe animation
+  updatePickaxeAnimation() {
+    const pickaxe = this.player.pickaxe;
+    
     // Keep pickaxe facing same direction as player
-    this.player.pickaxe.facing = this.player.facing;
+    pickaxe.facing = this.player.facing;
+    
+    // Update animation if playing
+    if (pickaxe.isAnimating) {
+      pickaxe.animationTimer++;
+      
+      if (pickaxe.animationTimer >= pickaxe.animationSpeed) {
+        pickaxe.animationTimer = 0;
+        pickaxe.animationFrame++;
+        
+        // Check if animation is complete (6 frames: 0-5)
+        if (pickaxe.animationFrame >= 6) {
+          pickaxe.isAnimating = false;
+          pickaxe.animationFrame = 0;
+        }
+      }
+    }
+  }
+
+  // Start pickaxe animation
+  startPickaxeAnimation() {
+    const pickaxe = this.player.pickaxe;
+    if (!pickaxe.isAnimating) {
+      pickaxe.isAnimating = true;
+      pickaxe.animationFrame = 0;
+      pickaxe.animationTimer = 0;
+    }
+  }
+
+  // Get current pickaxe sprite
+  getPickaxeSprite() {
+    const pickaxe = this.player.pickaxe;
+    const direction = pickaxe.facing;
+    const frame = pickaxe.animationFrame;
+    const spriteName = `pickaxe_${direction}_${frame}`;
+    return this.loadedAssets[spriteName] || null;
   }
 
   // Draw pickaxe
   drawPickaxe() {
     const pickaxe = this.player.pickaxe;
-    const pickaxeSprite = this.loadedAssets.pickaxe;
+    const pickaxeSprite = this.getPickaxeSprite();
     
     if (pickaxeSprite && pickaxeSprite.complete && pickaxeSprite.naturalWidth > 0) {
       // Position pickaxe next to player
@@ -772,28 +815,14 @@ export default class GameEngine {
       const pickaxeX = this.player.x + offsetX;
       const pickaxeY = this.player.y;
       
-      // Save context for potential flipping
-      this.ctx.save();
-      
-      // Move to pickaxe position
-      this.ctx.translate(pickaxeX, pickaxeY);
-      
-      // Flip horizontally for left direction
-      if (pickaxe.facing === 'left') {
-        this.ctx.scale(-1, 1);
-      }
-      
-      // Draw pickaxe (centered on position)
+      // Draw animated pickaxe sprite (no flipping needed - sprites are already oriented)
       this.ctx.drawImage(
         pickaxeSprite,
-        -pickaxe.size/2,
-        -pickaxe.size/2,
+        pickaxeX - pickaxe.size/2,
+        pickaxeY - pickaxe.size/2,
         pickaxe.size,
         pickaxe.size
       );
-      
-      // Restore context
-      this.ctx.restore();
     } else {
       // Fallback: draw simple pickaxe shape
       const offsetX = pickaxe.facing === 'right' ? 25 : -25;
@@ -846,8 +875,8 @@ export default class GameEngine {
     // Update player animation
     this.updatePlayerAnimation();
     
-    // Update pickaxe facing
-    this.updatePickaxeFacing();
+    // Update pickaxe animation
+    this.updatePickaxeAnimation();
     
     // Player movement (reduced speed)
     this.player.vx = 0;
