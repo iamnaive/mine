@@ -810,10 +810,11 @@ export default class GameEngine {
     const pickaxeSprite = this.getPickaxeSprite();
     
     if (pickaxeSprite && pickaxeSprite.complete && pickaxeSprite.naturalWidth > 0) {
-      // Position pickaxe next to player
-      const offsetX = pickaxe.facing === 'right' ? 25 : -25;
+      // Position pickaxe next to player (closer and higher)
+      const offsetX = pickaxe.facing === 'right' ? 22 : -22; // 3px closer (was 25, now 22)
+      const offsetY = -5; // 5px higher
       const pickaxeX = this.player.x + offsetX;
-      const pickaxeY = this.player.y;
+      const pickaxeY = this.player.y + offsetY;
       
       // Draw animated pickaxe sprite (no flipping needed - sprites are already oriented)
       this.ctx.drawImage(
@@ -825,9 +826,10 @@ export default class GameEngine {
       );
     } else {
       // Fallback: draw simple pickaxe shape
-      const offsetX = pickaxe.facing === 'right' ? 25 : -25;
+      const offsetX = pickaxe.facing === 'right' ? 22 : -22; // 3px closer (was 25, now 22)
+      const offsetY = -5; // 5px higher
       const pickaxeX = this.player.x + offsetX;
-      const pickaxeY = this.player.y;
+      const pickaxeY = this.player.y + offsetY;
       
       this.ctx.save();
       this.ctx.translate(pickaxeX, pickaxeY);
