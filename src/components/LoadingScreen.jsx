@@ -9,6 +9,8 @@ const LoadingScreen = ({ progress, isLoading, currentAsset }) => {
     }
     
     switch (assetName) {
+      case 'pickaxe':
+        return 'Loading mining tools...';
       case 'stone':
         return 'Loading stone blocks...';
       case 'special':

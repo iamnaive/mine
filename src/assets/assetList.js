@@ -97,6 +97,13 @@ export const GAME_ASSETS = [
     type: 'player',
     priority: 'high'
   },
+  // Pickaxe
+  {
+    name: 'pickaxe',
+    src: '/images/pickaxe.png',
+    type: 'tool',
+    priority: 'high'
+  },
   // Block textures
   {
     name: 'stone',
