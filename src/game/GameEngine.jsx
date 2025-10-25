@@ -94,11 +94,11 @@ export default class GameEngine {
     const depth = y / this.gridHeight;
     
     if (depth < 0.2) {
-      return Math.random() < 0.05 ? 'diamond' : 'stone';
+      return Math.random() < 0.1 ? 'special' : 'stone';
     } else if (depth < 0.5) {
-      return Math.random() < 0.1 ? 'gold' : Math.random() < 0.3 ? 'iron' : 'stone';
+      return Math.random() < 0.15 ? 'special' : 'stone';
     } else {
-      return Math.random() < 0.2 ? 'iron' : 'stone';
+      return Math.random() < 0.2 ? 'special' : 'stone';
     }
   }
   
@@ -271,9 +271,7 @@ export default class GameEngine {
   
   getBlockPoints(type) {
     switch (type) {
-      case 'diamond': return 100;
-      case 'gold': return 50;
-      case 'iron': return 25;
+      case 'special': return 50;
       case 'stone': return 10;
       default: return 10;
     }
@@ -330,10 +328,8 @@ export default class GameEngine {
   
   getBlockColor(type) {
     switch (type) {
-      case 'diamond': return '#3B82F6';
-      case 'gold': return '#F59E0B';
-      case 'iron': return '#9CA3AF';
       case 'stone': return '#6B7280';
+      case 'special': return '#8B5CF6';
       case 'dirt': return '#8b4513';
       case 'coal': return '#2d3748';
       default: return '#6B7280';
