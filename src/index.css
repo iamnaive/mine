@@ -634,18 +634,19 @@ canvas {
 }
 
 .header-connect-btn {
-  width: 160px;
-  height: 45px;
+  width: 320px;
+  height: 90px;
 }
 
 .btn-help {
   width: 150px;
   height: 45px;
+  margin-top: 25px;
 }
 
 .btn-sort {
-  width: 120px;
-  height: 40px;
+  width: 240px;
+  height: 80px;
 }
 
 .btn-refresh {
@@ -660,7 +661,7 @@ canvas {
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  color: #000;
+  color: #ffffff;
   font-size: 14px;
   position: relative;
 }
